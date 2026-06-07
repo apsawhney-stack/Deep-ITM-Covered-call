@@ -1,0 +1,237 @@
+
+======================================================================
+DTE 45 | Baseline Delta = 0.6
+======================================================================
+Overall Metrics: CAGR = 5.49%, Sortino = 0.24, MaxDD = -24.88%
+Trade Statistics:
+  Total Cycles (Entries): 11
+  Total Rolls:            4
+  Total Liquidations:     10
+    - Stop-Loss Triggers: 0
+    - Trend-Exit Triggers:10
+  HWM Yield Sweeps:       2 (Total Swept: $8,960.48)
+
+  Cycle Details:
+    Cycle 1: Entry Stock=187.44, Option Premium=17.79 (9.5% cushion) | Exit: TREND_EXIT at 198.88 (S_stop was 156.08)
+    Cycle 2: Entry Stock=207.83, Option Premium=21.75 (10.5% cushion) | Exit: TREND_EXIT at 217.80 (S_stop was 171.19)
+    Cycle 3: Entry Stock=219.57, Option Premium=33.45 (15.2% cushion) | Exit: TREND_EXIT at 213.65 (S_stop was 171.23)
+    Cycle 4: Entry Stock=242.84, Option Premium=22.70 (9.3% cushion) | Exit: TREND_EXIT at 361.62 (S_stop was 202.53)
+    Cycle 5: Entry Stock=280.26, Option Premium=36.59 (13.1% cushion) | Exit: TREND_EXIT at 284.70 (S_stop was 224.18)
+    Cycle 6: Entry Stock=308.58, Option Premium=48.58 (15.7% cushion) | Exit: TREND_EXIT at 293.94 (S_stop was 239.20)
+    Cycle 7: Entry Stock=316.90, Option Premium=40.00 (12.6% cushion) | Exit: TREND_EXIT at 329.65 (S_stop was 254.75)
+    Cycle 8: Entry Stock=433.09, Option Premium=49.62 (11.5% cushion) | Exit: TREND_EXIT at 395.23 (S_stop was 352.79)
+    Cycle 9: Entry Stock=430.14, Option Premium=41.50 (9.6% cushion) | Exit: TREND_EXIT at 451.67 (S_stop was 357.55)
+    Cycle 10: Entry Stock=399.27, Option Premium=57.20 (14.3% cushion) | Exit: TREND_EXIT at 392.78 (S_stop was 314.70)
+    Cycle 11: Entry Stock=392.51, Option Premium=39.90 (10.2% cushion) | Exit: N/A (Active/Expired)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.65
+======================================================================
+Overall Metrics: CAGR = 12.28%, Sortino = 0.69, MaxDD = -15.62%
+Trade Statistics:
+  Total Cycles (Entries): 12
+  Total Rolls:            6
+  Total Liquidations:     11
+    - Stop-Loss Triggers: 0
+    - Trend-Exit Triggers:11
+  HWM Yield Sweeps:       3 (Total Swept: $24,746.77)
+
+  Cycle Details:
+    Cycle 1: Entry Stock=187.44, Option Premium=19.22 (10.3% cushion) | Exit: TREND_EXIT at 198.88 (S_stop was 154.76)
+    Cycle 2: Entry Stock=207.83, Option Premium=23.65 (11.4% cushion) | Exit: TREND_EXIT at 217.80 (S_stop was 169.45)
+    Cycle 3: Entry Stock=219.57, Option Premium=38.99 (17.8% cushion) | Exit: TREND_EXIT at 213.65 (S_stop was 166.13)
+    Cycle 4: Entry Stock=242.84, Option Premium=25.60 (10.5% cushion) | Exit: TREND_EXIT at 361.62 (S_stop was 199.86)
+    Cycle 5: Entry Stock=280.26, Option Premium=43.10 (15.4% cushion) | Exit: TREND_EXIT at 284.70 (S_stop was 218.18)
+    Cycle 6: Entry Stock=308.58, Option Premium=54.75 (17.7% cushion) | Exit: TREND_EXIT at 293.94 (S_stop was 233.52)
+    Cycle 7: Entry Stock=316.90, Option Premium=47.05 (14.8% cushion) | Exit: TREND_EXIT at 329.65 (S_stop was 248.26)
+    Cycle 8: Entry Stock=433.09, Option Premium=55.67 (12.9% cushion) | Exit: TREND_EXIT at 395.23 (S_stop was 347.23)
+    Cycle 9: Entry Stock=430.14, Option Premium=47.85 (11.1% cushion) | Exit: TREND_EXIT at 451.67 (S_stop was 351.71)
+    Cycle 10: Entry Stock=438.57, Option Premium=38.00 (8.7% cushion) | Exit: TREND_EXIT at 419.25 (S_stop was 368.52)
+    Cycle 11: Entry Stock=399.27, Option Premium=69.35 (17.4% cushion) | Exit: TREND_EXIT at 392.78 (S_stop was 303.53)
+    Cycle 12: Entry Stock=392.51, Option Premium=47.15 (12.0% cushion) | Exit: N/A (Active/Expired)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.7
+======================================================================
+Overall Metrics: CAGR = 18.8%, Sortino = 1.08, MaxDD = -14.17%
+Trade Statistics:
+  Total Cycles (Entries): 12
+  Total Rolls:            6
+  Total Liquidations:     11
+    - Stop-Loss Triggers: 0
+    - Trend-Exit Triggers:11
+  HWM Yield Sweeps:       5 (Total Swept: $40,220.94)
+
+  Cycle Details:
+    Cycle 1: Entry Stock=187.44, Option Premium=24.06 (12.8% cushion) | Exit: TREND_EXIT at 198.88 (S_stop was 150.31)
+    Cycle 2: Entry Stock=207.83, Option Premium=27.25 (13.1% cushion) | Exit: TREND_EXIT at 217.80 (S_stop was 166.13)
+    Cycle 3: Entry Stock=219.57, Option Premium=43.14 (19.6% cushion) | Exit: TREND_EXIT at 213.65 (S_stop was 162.32)
+    Cycle 4: Entry Stock=242.84, Option Premium=28.80 (11.9% cushion) | Exit: TREND_EXIT at 361.62 (S_stop was 196.92)
+    Cycle 5: Entry Stock=280.26, Option Premium=50.36 (18.0% cushion) | Exit: TREND_EXIT at 284.70 (S_stop was 211.51)
+    Cycle 6: Entry Stock=308.58, Option Premium=61.26 (19.9% cushion) | Exit: TREND_EXIT at 293.94 (S_stop was 227.54)
+    Cycle 7: Entry Stock=316.90, Option Premium=54.50 (17.2% cushion) | Exit: TREND_EXIT at 329.65 (S_stop was 241.41)
+    Cycle 8: Entry Stock=433.09, Option Premium=65.44 (15.1% cushion) | Exit: TREND_EXIT at 395.23 (S_stop was 338.24)
+    Cycle 9: Entry Stock=430.14, Option Premium=54.55 (12.7% cushion) | Exit: TREND_EXIT at 451.67 (S_stop was 345.54)
+    Cycle 10: Entry Stock=438.57, Option Premium=38.00 (8.7% cushion) | Exit: TREND_EXIT at 419.25 (S_stop was 368.52)
+    Cycle 11: Entry Stock=399.27, Option Premium=82.25 (20.6% cushion) | Exit: TREND_EXIT at 392.78 (S_stop was 291.66)
+    Cycle 12: Entry Stock=392.51, Option Premium=54.90 (14.0% cushion) | Exit: N/A (Active/Expired)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.75
+======================================================================
+Overall Metrics: CAGR = 6.03%, Sortino = 0.4, MaxDD = -32.82%
+Trade Statistics:
+  Total Cycles (Entries): 12
+  Total Rolls:            6
+  Total Liquidations:     10
+    - Stop-Loss Triggers: 0
+    - Trend-Exit Triggers:10
+  HWM Yield Sweeps:       3 (Total Swept: $17,825.38)
+
+  Cycle Details:
+    Cycle 1: Entry Stock=187.44, Option Premium=27.66 (14.8% cushion) | Exit: TREND_EXIT at 217.80 (S_stop was 162.50)
+    Cycle 2: Entry Stock=207.83, Option Premium=31.20 (15.0% cushion) | Exit: TREND_EXIT at 213.65 (S_stop was 162.32)
+    Cycle 3: Entry Stock=219.57, Option Premium=43.14 (19.6% cushion) | Exit: TREND_EXIT at 361.62 (S_stop was 193.83)
+    Cycle 4: Entry Stock=242.84, Option Premium=32.15 (13.2% cushion) | Exit: TREND_EXIT at 284.70 (S_stop was 204.40)
+    Cycle 5: Entry Stock=280.26, Option Premium=58.09 (20.7% cushion) | Exit: TREND_EXIT at 293.94 (S_stop was 223.90)
+    Cycle 6: Entry Stock=308.58, Option Premium=65.20 (21.1% cushion) | Exit: TREND_EXIT at 329.65 (S_stop was 229.95)
+    Cycle 7: Entry Stock=316.90, Option Premium=66.95 (21.1% cushion) | Exit: TREND_EXIT at 395.23 (S_stop was 328.24)
+    Cycle 8: Entry Stock=433.09, Option Premium=76.31 (17.6% cushion) | Exit: TREND_EXIT at 451.67 (S_stop was 335.15)
+    Cycle 9: Entry Stock=430.14, Option Premium=65.85 (15.3% cushion) | Exit: TREND_EXIT at 419.25 (S_stop was 368.52)
+    Cycle 10: Entry Stock=438.57, Option Premium=38.00 (8.7% cushion) | Exit: TREND_EXIT at 392.78 (S_stop was 291.66)
+    Cycle 11: Entry Stock=399.27, Option Premium=82.25 (20.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 12: Entry Stock=392.51, Option Premium=67.55 (17.2% cushion) | Exit: N/A (Active/Expired)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.8
+======================================================================
+Overall Metrics: CAGR = -1.5%, Sortino = -0.32, MaxDD = -25.7%
+Trade Statistics:
+  Total Cycles (Entries): 15
+  Total Rolls:            4
+  Total Liquidations:     12
+    - Stop-Loss Triggers: 0
+    - Trend-Exit Triggers:12
+  HWM Yield Sweeps:       4 (Total Swept: $20,371.06)
+
+  Cycle Details:
+    Cycle 1: Entry Stock=187.44, Option Premium=35.61 (19.0% cushion) | Exit: TREND_EXIT at 217.80 (S_stop was 158.68)
+    Cycle 2: Entry Stock=207.83, Option Premium=35.35 (17.0% cushion) | Exit: TREND_EXIT at 213.65 (S_stop was 162.32)
+    Cycle 3: Entry Stock=219.57, Option Premium=43.14 (19.6% cushion) | Exit: TREND_EXIT at 361.62 (S_stop was 278.88)
+    Cycle 4: Entry Stock=242.84, Option Premium=39.50 (16.3% cushion) | Exit: TREND_EXIT at 284.70 (S_stop was 200.47)
+    Cycle 5: Entry Stock=383.68, Option Premium=80.55 (21.0% cushion) | Exit: TREND_EXIT at 293.94 (S_stop was 223.90)
+    Cycle 6: Entry Stock=280.26, Option Premium=62.36 (22.3% cushion) | Exit: TREND_EXIT at 329.65 (S_stop was 229.95)
+    Cycle 7: Entry Stock=308.58, Option Premium=65.20 (21.1% cushion) | Exit: TREND_EXIT at 395.23 (S_stop was 313.20)
+    Cycle 8: Entry Stock=316.90, Option Premium=66.95 (21.1% cushion) | Exit: TREND_EXIT at 435.80 (S_stop was 323.74)
+    Cycle 9: Entry Stock=433.09, Option Premium=92.66 (21.4% cushion) | Exit: TREND_EXIT at 419.25 (S_stop was 368.52)
+    Cycle 10: Entry Stock=430.14, Option Premium=78.25 (18.2% cushion) | Exit: TREND_EXIT at 416.56 (S_stop was 370.86)
+    Cycle 11: Entry Stock=438.57, Option Premium=38.00 (8.7% cushion) | Exit: TREND_EXIT at 402.51 (S_stop was 332.79)
+    Cycle 12: Entry Stock=449.36, Option Premium=46.25 (10.3% cushion) | Exit: TREND_EXIT at 392.78 (S_stop was 291.66)
+    Cycle 13: Entry Stock=409.38, Option Premium=47.65 (11.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 14: Entry Stock=399.27, Option Premium=82.25 (20.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 15: Entry Stock=392.51, Option Premium=80.65 (20.5% cushion) | Exit: N/A (Active/Expired)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.85
+======================================================================
+Overall Metrics: CAGR = -4.65%, Sortino = -0.91, MaxDD = -21.71%
+Trade Statistics:
+  Total Cycles (Entries): 15
+  Total Rolls:            3
+  Total Liquidations:     12
+    - Stop-Loss Triggers: 0
+    - Trend-Exit Triggers:12
+  HWM Yield Sweeps:       5 (Total Swept: $10,339.77)
+
+  Cycle Details:
+    Cycle 1: Entry Stock=187.44, Option Premium=39.96 (21.3% cushion) | Exit: TREND_EXIT at 217.80 (S_stop was 154.68)
+    Cycle 2: Entry Stock=207.83, Option Premium=39.70 (19.1% cushion) | Exit: TREND_EXIT at 213.65 (S_stop was 162.32)
+    Cycle 3: Entry Stock=219.57, Option Premium=43.14 (19.6% cushion) | Exit: TREND_EXIT at 361.62 (S_stop was 294.59)
+    Cycle 4: Entry Stock=242.84, Option Premium=42.65 (17.6% cushion) | Exit: TREND_EXIT at 284.70 (S_stop was 200.47)
+    Cycle 5: Entry Stock=411.05, Option Premium=90.84 (22.1% cushion) | Exit: TREND_EXIT at 293.94 (S_stop was 223.90)
+    Cycle 6: Entry Stock=280.26, Option Premium=62.36 (22.3% cushion) | Exit: TREND_EXIT at 329.65 (S_stop was 229.95)
+    Cycle 7: Entry Stock=308.58, Option Premium=65.20 (21.1% cushion) | Exit: TREND_EXIT at 395.23 (S_stop was 313.20)
+    Cycle 8: Entry Stock=316.90, Option Premium=66.95 (21.1% cushion) | Exit: TREND_EXIT at 435.80 (S_stop was 312.05)
+    Cycle 9: Entry Stock=433.09, Option Premium=92.66 (21.4% cushion) | Exit: TREND_EXIT at 419.25 (S_stop was 368.52)
+    Cycle 10: Entry Stock=430.14, Option Premium=90.95 (21.1% cushion) | Exit: TREND_EXIT at 416.56 (S_stop was 370.86)
+    Cycle 11: Entry Stock=438.57, Option Premium=38.00 (8.7% cushion) | Exit: TREND_EXIT at 402.51 (S_stop was 332.79)
+    Cycle 12: Entry Stock=449.36, Option Premium=46.25 (10.3% cushion) | Exit: TREND_EXIT at 392.78 (S_stop was 291.66)
+    Cycle 13: Entry Stock=409.38, Option Premium=47.65 (11.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 14: Entry Stock=399.27, Option Premium=82.25 (20.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 15: Entry Stock=392.51, Option Premium=80.65 (20.5% cushion) | Exit: N/A (Active/Expired)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.88
+======================================================================
+Overall Metrics: CAGR = -4.61%, Sortino = -0.93, MaxDD = -21.7%
+Trade Statistics:
+  Total Cycles (Entries): 15
+  Total Rolls:            3
+  Total Liquidations:     12
+    - Stop-Loss Triggers: 0
+    - Trend-Exit Triggers:12
+  HWM Yield Sweeps:       5 (Total Swept: $10,420.77)
+
+  Cycle Details:
+    Cycle 1: Entry Stock=187.44, Option Premium=39.96 (21.3% cushion) | Exit: TREND_EXIT at 217.80 (S_stop was 154.68)
+    Cycle 2: Entry Stock=207.83, Option Premium=39.70 (19.1% cushion) | Exit: TREND_EXIT at 213.65 (S_stop was 162.32)
+    Cycle 3: Entry Stock=219.57, Option Premium=43.14 (19.6% cushion) | Exit: TREND_EXIT at 361.62 (S_stop was 294.59)
+    Cycle 4: Entry Stock=242.84, Option Premium=51.85 (21.4% cushion) | Exit: TREND_EXIT at 284.70 (S_stop was 200.47)
+    Cycle 5: Entry Stock=411.05, Option Premium=90.84 (22.1% cushion) | Exit: TREND_EXIT at 293.94 (S_stop was 223.90)
+    Cycle 6: Entry Stock=280.26, Option Premium=62.36 (22.3% cushion) | Exit: TREND_EXIT at 329.65 (S_stop was 229.95)
+    Cycle 7: Entry Stock=308.58, Option Premium=65.20 (21.1% cushion) | Exit: TREND_EXIT at 395.23 (S_stop was 313.20)
+    Cycle 8: Entry Stock=316.90, Option Premium=66.95 (21.1% cushion) | Exit: TREND_EXIT at 435.80 (S_stop was 312.05)
+    Cycle 9: Entry Stock=433.09, Option Premium=92.66 (21.4% cushion) | Exit: TREND_EXIT at 419.25 (S_stop was 368.52)
+    Cycle 10: Entry Stock=430.14, Option Premium=90.95 (21.1% cushion) | Exit: TREND_EXIT at 416.56 (S_stop was 370.86)
+    Cycle 11: Entry Stock=438.57, Option Premium=38.00 (8.7% cushion) | Exit: TREND_EXIT at 402.51 (S_stop was 332.79)
+    Cycle 12: Entry Stock=449.36, Option Premium=46.25 (10.3% cushion) | Exit: TREND_EXIT at 392.78 (S_stop was 291.66)
+    Cycle 13: Entry Stock=409.38, Option Premium=47.65 (11.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 14: Entry Stock=399.27, Option Premium=82.25 (20.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 15: Entry Stock=392.51, Option Premium=80.65 (20.5% cushion) | Exit: N/A (Active/Expired)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.9
+======================================================================
+Overall Metrics: CAGR = -4.61%, Sortino = -0.93, MaxDD = -21.7%
+Trade Statistics:
+  Total Cycles (Entries): 15
+  Total Rolls:            3
+  Total Liquidations:     12
+    - Stop-Loss Triggers: 0
+    - Trend-Exit Triggers:12
+  HWM Yield Sweeps:       5 (Total Swept: $10,420.77)
+
+  Cycle Details:
+    Cycle 1: Entry Stock=187.44, Option Premium=39.96 (21.3% cushion) | Exit: TREND_EXIT at 217.80 (S_stop was 154.68)
+    Cycle 2: Entry Stock=207.83, Option Premium=39.70 (19.1% cushion) | Exit: TREND_EXIT at 213.65 (S_stop was 162.32)
+    Cycle 3: Entry Stock=219.57, Option Premium=43.14 (19.6% cushion) | Exit: TREND_EXIT at 361.62 (S_stop was 294.59)
+    Cycle 4: Entry Stock=242.84, Option Premium=51.85 (21.4% cushion) | Exit: TREND_EXIT at 284.70 (S_stop was 200.47)
+    Cycle 5: Entry Stock=411.05, Option Premium=90.84 (22.1% cushion) | Exit: TREND_EXIT at 293.94 (S_stop was 223.90)
+    Cycle 6: Entry Stock=280.26, Option Premium=62.36 (22.3% cushion) | Exit: TREND_EXIT at 329.65 (S_stop was 229.95)
+    Cycle 7: Entry Stock=308.58, Option Premium=65.20 (21.1% cushion) | Exit: TREND_EXIT at 395.23 (S_stop was 313.20)
+    Cycle 8: Entry Stock=316.90, Option Premium=66.95 (21.1% cushion) | Exit: TREND_EXIT at 435.80 (S_stop was 312.05)
+    Cycle 9: Entry Stock=433.09, Option Premium=92.66 (21.4% cushion) | Exit: TREND_EXIT at 419.25 (S_stop was 368.52)
+    Cycle 10: Entry Stock=430.14, Option Premium=90.95 (21.1% cushion) | Exit: TREND_EXIT at 416.56 (S_stop was 370.86)
+    Cycle 11: Entry Stock=438.57, Option Premium=38.00 (8.7% cushion) | Exit: TREND_EXIT at 402.51 (S_stop was 332.79)
+    Cycle 12: Entry Stock=449.36, Option Premium=46.25 (10.3% cushion) | Exit: TREND_EXIT at 392.78 (S_stop was 291.66)
+    Cycle 13: Entry Stock=409.38, Option Premium=47.65 (11.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 14: Entry Stock=399.27, Option Premium=82.25 (20.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 15: Entry Stock=392.51, Option Premium=80.65 (20.5% cushion) | Exit: N/A (Active/Expired)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.93
+======================================================================
+Overall Metrics: CAGR = None%, Sortino = None, MaxDD = None%
+Trade Statistics:
+  Total Cycles (Entries): 4
+  Total Rolls:            1
+  Total Liquidations:     2
+    - Stop-Loss Triggers: 0
+    - Trend-Exit Triggers:2
+  HWM Yield Sweeps:       2 (Total Swept: $5,440.41)
+
+  Cycle Details:
+    Cycle 1: Entry Stock=187.44, Option Premium=39.96 (21.3% cushion) | Exit: TREND_EXIT at 217.80 (S_stop was 154.68)
+    Cycle 2: Entry Stock=207.83, Option Premium=39.70 (19.1% cushion) | Exit: TREND_EXIT at 213.65 (S_stop was 162.32)
+    Cycle 3: Entry Stock=219.57, Option Premium=43.14 (19.6% cushion) | Exit: N/A (Active/Expired)
+    Cycle 4: Entry Stock=242.84, Option Premium=51.85 (21.4% cushion) | Exit: N/A (Active/Expired)

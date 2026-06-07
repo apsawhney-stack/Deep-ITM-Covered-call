@@ -1,0 +1,25 @@
+# Deep ITM Covered Call Backtest Configuration
+
+# Simulation Parameters
+starting_capital: 100000
+asset: "TSLA"
+
+# Strategy Rules
+target_dte: 30                  # Target Days to Expiration (DTE) for option write
+relative_roll_threshold: 0.15   # Roll when remaining extrinsic <= 15% of initial
+stop_loss_pct: 0.08             # Hard stop-loss threshold on cycle equity (8%)
+adverse_fill_factor: 0.01       # Slippage penalty on intraday stop-loss trigger (1%)
+
+# Volatility Risk Premium (VRP) Filter Gates
+vrp_rich_threshold: 0.5         # VRP z-score >= 0.5: Rich (Standard target deltas)
+vrp_compressed_threshold: -1.0  # -1.0 <= VRP z-score < 0.5: Compressed (Delta +0.05 defense)
+# VRP z-score < -1.0: Severe underpricing (Halt option writing, stay in cash)
+
+# Liquidity / Volume Filters
+min_open_interest: 100          # Minimum option contract open interest
+min_daily_volume: 10            # Minimum option contract trading volume
+max_spread_to_mid: 0.15         # Maximum bid-ask spread relative to midpoint (15%)
+
+# Date Range for Backtest
+start_date: "2024-06-01"
+end_date: "2026-05-31"

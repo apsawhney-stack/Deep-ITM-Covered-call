@@ -1,0 +1,23 @@
+# Credentials
+creds.txt
+
+# Local Data Cache & Databases
+data/
+*.parquet
+
+# Java Terminal Bin
+ThetaTerminal.jar
+
+# Python bytecode & caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# macOS system files
+.DS_Store
+
+# Local results and plots
+results/

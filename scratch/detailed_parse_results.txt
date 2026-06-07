@@ -1,0 +1,299 @@
+
+======================================================================
+DTE 45 | Baseline Delta = 0.6
+======================================================================
+  Cycle 1 ENTRY: 500 shares @ 187.44, 5x calls @ 17.79 (Net Cost: $84,825.00)
+    - CLOSE OPTION EARLY: Bought back @ 70.77
+    - EXIT STOCK: Sold 500 shares @ 198.88
+    >>> DRAWDOWN CHECK: Ending Cash $79,445.52
+  Cycle 2 ENTRY: 400 shares @ 207.83, 4x calls @ 21.75 (Net Cost: $74,432.00)
+    - CLOSE OPTION EARLY: Bought back @ 5.17
+    - ROLL: Sold 4x @ 31.84
+    - EXIT OPTION: Bought back @ 26.25
+    - EXIT STOCK: Sold 400 shares @ 217.80
+    >>> DRAWDOWN CHECK: Ending Cash $92,387.91
+  Cycle 3 ENTRY: 400 shares @ 219.57, 4x calls @ 33.45 (Net Cost: $74,448.00)
+    - EXIT OPTION: Bought back @ 31.05
+    - EXIT STOCK: Sold 400 shares @ 213.65
+    >>> DRAWDOWN CHECK: Ending Cash $91,025.64
+  Cycle 4 ENTRY: 400 shares @ 242.84, 4x calls @ 22.70 (Net Cost: $88,056.00)
+    - CLOSE OPTION EARLY: Bought back @ 99.70
+    - ROLL: Sold 4x @ 43.67
+    - CLOSE OPTION EARLY: Bought back @ 60.79
+    - ROLL: Sold 4x @ 50.06
+    - EXIT OPTION: Bought back @ 31.85
+    - EXIT STOCK: Sold 400 shares @ 361.62
+    >>> HWM SWEEP: Swept $8,309.07
+  Cycle 5 ENTRY: 400 shares @ 280.26, 4x calls @ 36.59 (Net Cost: $97,468.00)
+    - CLOSE OPTION EARLY: Bought back @ 100.45
+    - ROLL: Sold 4x @ 39.30
+    - EXIT OPTION: Bought back @ 13.40
+    - EXIT STOCK: Sold 400 shares @ 284.70
+    >>> DRAWDOWN CHECK: Ending Cash $87,595.14
+  Cycle 6 ENTRY: 300 shares @ 308.58, 3x calls @ 48.58 (Net Cost: $78,000.00)
+    - EXIT OPTION: Bought back @ 28.60
+    - EXIT STOCK: Sold 300 shares @ 293.94
+    >>> DRAWDOWN CHECK: Ending Cash $89,236.33
+  Cycle 7 ENTRY: 300 shares @ 316.90, 3x calls @ 40.00 (Net Cost: $83,070.00)
+    - CLOSE OPTION EARLY: Bought back @ 36.76
+    - EXIT STOCK: Sold 300 shares @ 329.65
+    >>> DRAWDOWN CHECK: Ending Cash $94,105.11
+  Cycle 8 ENTRY: 200 shares @ 433.09, 2x calls @ 49.62 (Net Cost: $76,694.00)
+    - CLOSE OPTION EARLY: Bought back @ 1.58
+    - EXIT STOCK: Sold 200 shares @ 395.23
+    >>> DRAWDOWN CHECK: Ending Cash $96,756.97
+  Cycle 9 ENTRY: 200 shares @ 430.14, 2x calls @ 41.50 (Net Cost: $77,728.00)
+    - CLOSE OPTION EARLY: Bought back @ 44.10
+    - EXIT STOCK: Sold 200 shares @ 451.67
+    >>> HWM SWEEP: Swept $651.41
+  Cycle 10 ENTRY: 200 shares @ 399.27, 2x calls @ 57.20 (Net Cost: $68,414.00)
+    - EXIT OPTION: Bought back @ 55.25
+    - EXIT STOCK: Sold 200 shares @ 392.78
+    >>> DRAWDOWN CHECK: Ending Cash $99,790.83
+  Cycle 11 ENTRY: 200 shares @ 392.51, 2x calls @ 39.90 (Net Cost: $70,522.00)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.65
+======================================================================
+  Cycle 1 ENTRY: 500 shares @ 187.44, 5x calls @ 19.22 (Net Cost: $84,110.00)
+    - CLOSE OPTION EARLY: Bought back @ 57.89
+    - ROLL: Sold 5x @ 40.25
+    - EXIT OPTION: Bought back @ 22.95
+    - EXIT STOCK: Sold 500 shares @ 198.88
+    >>> DRAWDOWN CHECK: Ending Cash $95,250.52
+  Cycle 2 ENTRY: 500 shares @ 207.83, 5x calls @ 23.65 (Net Cost: $92,090.00)
+    - CLOSE OPTION EARLY: Bought back @ 16.25
+    - ROLL: Sold 5x @ 29.95
+    - EXIT OPTION: Bought back @ 17.35
+    - EXIT STOCK: Sold 500 shares @ 217.80
+    >>> HWM SWEEP: Swept $10,341.49
+  Cycle 3 ENTRY: 500 shares @ 219.57, 5x calls @ 38.99 (Net Cost: $90,290.00)
+    - EXIT OPTION: Bought back @ 36.50
+    - EXIT STOCK: Sold 500 shares @ 213.65
+    >>> DRAWDOWN CHECK: Ending Cash $98,334.50
+  Cycle 4 ENTRY: 400 shares @ 242.84, 4x calls @ 25.60 (Net Cost: $86,896.00)
+    - CLOSE OPTION EARLY: Bought back @ 116.80
+    - ROLL: Sold 4x @ 37.70
+    - CLOSE OPTION EARLY: Bought back @ 73.29
+    - ROLL: Sold 4x @ 49.84
+    - EXIT OPTION: Bought back @ 4.55
+    - EXIT STOCK: Sold 400 shares @ 361.62
+    >>> HWM SWEEP: Swept $13,388.65
+  Cycle 5 ENTRY: 400 shares @ 280.26, 4x calls @ 43.10 (Net Cost: $94,864.00)
+    - CLOSE OPTION EARLY: Bought back @ 110.20
+    - ROLL: Sold 4x @ 45.00
+    - EXIT OPTION: Bought back @ 16.40
+    - EXIT STOCK: Sold 400 shares @ 284.70
+    >>> DRAWDOWN CHECK: Ending Cash $87,383.14
+  Cycle 6 ENTRY: 300 shares @ 308.58, 3x calls @ 54.75 (Net Cost: $76,149.00)
+    - EXIT OPTION: Bought back @ 35.75
+    - EXIT STOCK: Sold 300 shares @ 293.94
+    >>> DRAWDOWN CHECK: Ending Cash $88,731.73
+  Cycle 7 ENTRY: 300 shares @ 316.90, 3x calls @ 47.05 (Net Cost: $80,955.00)
+    - CLOSE OPTION EARLY: Bought back @ 45.44
+    - EXIT STOCK: Sold 300 shares @ 329.65
+    >>> DRAWDOWN CHECK: Ending Cash $93,111.07
+  Cycle 8 ENTRY: 200 shares @ 433.09, 2x calls @ 55.67 (Net Cost: $75,484.00)
+    - CLOSE OPTION EARLY: Bought back @ 42.94
+    - ROLL: Sold 2x @ 48.40
+    - EXIT OPTION: Bought back @ 22.20
+    - EXIT STOCK: Sold 200 shares @ 395.23
+    >>> DRAWDOWN CHECK: Ending Cash $93,935.22
+  Cycle 9 ENTRY: 200 shares @ 430.14, 2x calls @ 47.85 (Net Cost: $76,458.00)
+    - CLOSE OPTION EARLY: Bought back @ 53.65
+    - EXIT STOCK: Sold 200 shares @ 451.67
+    >>> DRAWDOWN CHECK: Ending Cash $97,186.49
+  Cycle 10 ENTRY: 200 shares @ 438.57, 2x calls @ 38.00 (Net Cost: $80,114.00)
+    - EXIT OPTION: Bought back @ 0.00
+    - EXIT STOCK: Sold 200 shares @ 419.25
+    >>> HWM SWEEP: Swept $1,016.63
+  Cycle 11 ENTRY: 300 shares @ 399.27, 3x calls @ 69.35 (Net Cost: $98,976.00)
+    - EXIT OPTION: Bought back @ 67.45
+    - EXIT STOCK: Sold 300 shares @ 392.78
+    >>> DRAWDOWN CHECK: Ending Cash $99,175.22
+  Cycle 12 ENTRY: 200 shares @ 392.51, 2x calls @ 47.15 (Net Cost: $69,072.00)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.7
+======================================================================
+  Cycle 1 ENTRY: 600 shares @ 187.44, 6x calls @ 24.06 (Net Cost: $98,028.00)
+    - CLOSE OPTION EARLY: Bought back @ 63.05
+    - ROLL: Sold 6x @ 40.25
+    - EXIT OPTION: Bought back @ 0.00
+    - EXIT STOCK: Sold 600 shares @ 198.88
+    >>> HWM SWEEP: Swept $7,829.52
+  Cycle 2 ENTRY: 500 shares @ 207.83, 5x calls @ 27.25 (Net Cost: $90,290.00)
+    - CLOSE OPTION EARLY: Bought back @ 21.17
+    - ROLL: Sold 5x @ 36.05
+    - EXIT OPTION: Bought back @ 23.90
+    - EXIT STOCK: Sold 500 shares @ 217.80
+    >>> HWM SWEEP: Swept $14,211.25
+  Cycle 3 ENTRY: 500 shares @ 219.57, 5x calls @ 43.14 (Net Cost: $88,215.00)
+    - EXIT OPTION: Bought back @ 38.85
+    - EXIT STOCK: Sold 500 shares @ 213.65
+    >>> DRAWDOWN CHECK: Ending Cash $99,234.50
+  Cycle 4 ENTRY: 400 shares @ 242.84, 4x calls @ 28.80 (Net Cost: $85,616.00)
+    - CLOSE OPTION EARLY: Bought back @ 121.75
+    - ROLL: Sold 4x @ 43.60
+    - CLOSE OPTION EARLY: Bought back @ 83.03
+    - ROLL: Sold 4x @ 58.50
+    - EXIT OPTION: Bought back @ 8.45
+    - EXIT STOCK: Sold 400 shares @ 361.62
+    >>> HWM SWEEP: Swept $13,957.97
+  Cycle 5 ENTRY: 400 shares @ 280.26, 4x calls @ 50.36 (Net Cost: $91,960.00)
+    - CLOSE OPTION EARLY: Bought back @ 107.35
+    - ROLL: Sold 4x @ 52.00
+    - EXIT OPTION: Bought back @ 19.95
+    - EXIT STOCK: Sold 400 shares @ 284.70
+    >>> DRAWDOWN CHECK: Ending Cash $92,803.14
+  Cycle 6 ENTRY: 300 shares @ 308.58, 3x calls @ 61.26 (Net Cost: $74,196.00)
+    - EXIT OPTION: Bought back @ 44.20
+    - EXIT STOCK: Sold 300 shares @ 293.94
+    >>> DRAWDOWN CHECK: Ending Cash $93,570.75
+  Cycle 7 ENTRY: 300 shares @ 316.90, 3x calls @ 54.50 (Net Cost: $78,720.00)
+    - CLOSE OPTION EARLY: Bought back @ 55.35
+    - EXIT STOCK: Sold 300 shares @ 329.65
+    >>> DRAWDOWN CHECK: Ending Cash $97,215.79
+  Cycle 8 ENTRY: 200 shares @ 433.09, 2x calls @ 65.44 (Net Cost: $73,530.00)
+    - CLOSE OPTION EARLY: Bought back @ 62.69
+    - ROLL: Sold 2x @ 61.02
+    - EXIT OPTION: Bought back @ 26.60
+    - EXIT STOCK: Sold 200 shares @ 395.23
+    >>> DRAWDOWN CHECK: Ending Cash $97,713.83
+  Cycle 9 ENTRY: 200 shares @ 430.14, 2x calls @ 54.55 (Net Cost: $75,118.00)
+    - CLOSE OPTION EARLY: Bought back @ 63.25
+    - EXIT STOCK: Sold 200 shares @ 451.67
+    >>> HWM SWEEP: Swept $389.34
+  Cycle 10 ENTRY: 200 shares @ 438.57, 2x calls @ 38.00 (Net Cost: $80,114.00)
+    - EXIT OPTION: Bought back @ 0.00
+    - EXIT STOCK: Sold 200 shares @ 419.25
+    >>> HWM SWEEP: Swept $3,832.86
+  Cycle 11 ENTRY: 300 shares @ 399.27, 3x calls @ 82.25 (Net Cost: $95,106.00)
+    - EXIT OPTION: Bought back @ 80.20
+    - EXIT STOCK: Sold 300 shares @ 392.78
+    >>> DRAWDOWN CHECK: Ending Cash $99,220.22
+  Cycle 12 ENTRY: 200 shares @ 392.51, 2x calls @ 54.90 (Net Cost: $67,522.00)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.75
+======================================================================
+  Cycle 1 ENTRY: 600 shares @ 187.44, 6x calls @ 27.66 (Net Cost: $95,868.00)
+    >>> HWM SWEEP: Swept $3,344.52
+  Cycle 2 ENTRY: 500 shares @ 207.83, 5x calls @ 31.20 (Net Cost: $88,315.00)
+    - CLOSE OPTION EARLY: Bought back @ 64.35
+    - ROLL: Sold 5x @ 49.55
+    - EXIT OPTION: Bought back @ 15.15
+    - EXIT STOCK: Sold 500 shares @ 217.80
+    >>> HWM SWEEP: Swept $5,762.89
+  Cycle 3 ENTRY: 500 shares @ 219.57, 5x calls @ 43.14 (Net Cost: $88,215.00)
+    - EXIT OPTION: Bought back @ 38.85
+    - EXIT STOCK: Sold 500 shares @ 213.65
+    >>> DRAWDOWN CHECK: Ending Cash $99,234.50
+  Cycle 4 ENTRY: 400 shares @ 242.84, 4x calls @ 32.15 (Net Cost: $84,276.00)
+    - CLOSE OPTION EARLY: Bought back @ 138.30
+    - ROLL: Sold 4x @ 50.15
+    - CLOSE OPTION EARLY: Bought back @ 92.78
+    - ROLL: Sold 4x @ 68.19
+    - EXIT OPTION: Bought back @ 14.85
+    - EXIT STOCK: Sold 400 shares @ 361.62
+    >>> HWM SWEEP: Swept $8,717.97
+  Cycle 5 ENTRY: 400 shares @ 280.26, 4x calls @ 58.09 (Net Cost: $88,868.00)
+    - CLOSE OPTION EARLY: Bought back @ 117.20
+    - ROLL: Sold 4x @ 59.00
+    - EXIT OPTION: Bought back @ 24.10
+    - EXIT STOCK: Sold 400 shares @ 284.70
+    >>> DRAWDOWN CHECK: Ending Cash $93,097.14
+  Cycle 6 ENTRY: 300 shares @ 308.58, 3x calls @ 65.20 (Net Cost: $73,014.00)
+    - CLOSE OPTION EARLY: Bought back @ 99.53
+    - ROLL: Sold 3x @ 69.15
+    - EXIT OPTION: Bought back @ 48.05
+    - EXIT STOCK: Sold 300 shares @ 293.94
+    >>> DRAWDOWN CHECK: Ending Cash $84,782.39
+  Cycle 7 ENTRY: 300 shares @ 316.90, 3x calls @ 66.95 (Net Cost: $74,985.00)
+    - CLOSE OPTION EARLY: Bought back @ 69.93
+    - EXIT STOCK: Sold 300 shares @ 329.65
+    >>> DRAWDOWN CHECK: Ending Cash $87,781.27
+  Cycle 8 ENTRY: 200 shares @ 433.09, 2x calls @ 76.31 (Net Cost: $71,356.00)
+    - CLOSE OPTION EARLY: Bought back @ 76.99
+    - ROLL: Sold 2x @ 72.17
+    - EXIT OPTION: Bought back @ 34.35
+    - EXIT STOCK: Sold 200 shares @ 395.23
+    >>> DRAWDOWN CHECK: Ending Cash $88,211.49
+  Cycle 9 ENTRY: 200 shares @ 430.14, 2x calls @ 65.85 (Net Cost: $72,858.00)
+    - CLOSE OPTION EARLY: Bought back @ 77.90
+    - EXIT STOCK: Sold 200 shares @ 451.67
+    >>> DRAWDOWN CHECK: Ending Cash $90,206.35
+  Cycle 10 ENTRY: 200 shares @ 438.57, 2x calls @ 38.00 (Net Cost: $80,114.00)
+    - EXIT OPTION: Bought back @ 0.00
+    - EXIT STOCK: Sold 200 shares @ 419.25
+    >>> DRAWDOWN CHECK: Ending Cash $94,029.72
+  Cycle 11 ENTRY: 200 shares @ 399.27, 2x calls @ 82.25 (Net Cost: $63,404.00)
+    - EXIT OPTION: Bought back @ 80.20
+    - EXIT STOCK: Sold 200 shares @ 392.78
+    >>> DRAWDOWN CHECK: Ending Cash $93,660.97
+  Cycle 12 ENTRY: 200 shares @ 392.51, 2x calls @ 67.55 (Net Cost: $64,992.00)
+
+======================================================================
+DTE 45 | Baseline Delta = 0.8
+======================================================================
+  Cycle 1 ENTRY: 600 shares @ 187.44, 6x calls @ 35.61 (Net Cost: $91,098.00)
+    >>> HWM SWEEP: Swept $2,114.52
+  Cycle 2 ENTRY: 500 shares @ 207.83, 5x calls @ 35.35 (Net Cost: $86,240.00)
+    - CLOSE OPTION EARLY: Bought back @ 75.25
+    - ROLL: Sold 5x @ 57.95
+    - EXIT OPTION: Bought back @ 20.25
+    - EXIT STOCK: Sold 500 shares @ 217.80
+    >>> HWM SWEEP: Swept $4,037.89
+  Cycle 3 ENTRY: 500 shares @ 219.57, 5x calls @ 43.14 (Net Cost: $88,215.00)
+    - EXIT OPTION: Bought back @ 38.85
+    - EXIT STOCK: Sold 500 shares @ 213.65
+    >>> DRAWDOWN CHECK: Ending Cash $99,234.50
+  Cycle 4 ENTRY: 400 shares @ 242.84, 4x calls @ 39.50 (Net Cost: $81,336.00)
+    - CLOSE OPTION EARLY: Bought back @ 160.30
+    - ROLL: Sold 4x @ 77.11
+    >>> HWM SWEEP: Swept $12,769.97
+  Cycle 5 ENTRY: 300 shares @ 383.68, 3x calls @ 80.55 (Net Cost: $90,939.00)
+    - EXIT OPTION: Bought back @ 59.45
+    - EXIT STOCK: Sold 300 shares @ 361.62
+    >>> DRAWDOWN CHECK: Ending Cash $99,825.30
+  Cycle 6 ENTRY: 400 shares @ 280.26, 4x calls @ 62.36 (Net Cost: $87,160.00)
+    - EXIT OPTION: Bought back @ 65.25
+    - EXIT STOCK: Sold 400 shares @ 284.70
+    >>> HWM SWEEP: Swept $1,448.68
+  Cycle 7 ENTRY: 400 shares @ 308.58, 4x calls @ 65.20 (Net Cost: $97,352.00)
+    - CLOSE OPTION EARLY: Bought back @ 99.53
+    - ROLL: Sold 4x @ 69.15
+    - EXIT OPTION: Bought back @ 48.05
+    - EXIT STOCK: Sold 400 shares @ 293.94
+    >>> DRAWDOWN CHECK: Ending Cash $88,902.45
+  Cycle 8 ENTRY: 300 shares @ 316.90, 3x calls @ 66.95 (Net Cost: $74,985.00)
+    - CLOSE OPTION EARLY: Bought back @ 69.93
+    - EXIT STOCK: Sold 300 shares @ 329.65
+    >>> DRAWDOWN CHECK: Ending Cash $91,904.68
+  Cycle 9 ENTRY: 200 shares @ 433.09, 2x calls @ 92.66 (Net Cost: $68,086.00)
+    - CLOSE OPTION EARLY: Bought back @ 96.65
+    - ROLL: Sold 2x @ 84.32
+    - EXIT OPTION: Bought back @ 43.50
+    - EXIT STOCK: Sold 200 shares @ 395.23
+    >>> DRAWDOWN CHECK: Ending Cash $92,298.93
+  Cycle 10 ENTRY: 200 shares @ 430.14, 2x calls @ 78.25 (Net Cost: $70,378.00)
+    - CLOSE OPTION EARLY: Bought back @ 76.85
+    - EXIT STOCK: Sold 200 shares @ 435.80
+    >>> DRAWDOWN CHECK: Ending Cash $93,814.36
+  Cycle 11 ENTRY: 200 shares @ 438.57, 2x calls @ 38.00 (Net Cost: $80,114.00)
+    - EXIT OPTION: Bought back @ 79.55
+    - EXIT STOCK: Sold 200 shares @ 419.25
+    >>> DRAWDOWN CHECK: Ending Cash $81,704.11
+  Cycle 12 ENTRY: 200 shares @ 449.36, 2x calls @ 46.25 (Net Cost: $80,622.00)
+    - EXIT OPTION: Bought back @ 0.00
+    - EXIT STOCK: Sold 200 shares @ 416.56
+    >>> DRAWDOWN CHECK: Ending Cash $84,410.18
+  Cycle 13 ENTRY: 200 shares @ 409.38, 2x calls @ 47.65 (Net Cost: $72,346.00)
+    - EXIT OPTION: Bought back @ 78.75
+    - EXIT STOCK: Sold 200 shares @ 402.51
+    >>> DRAWDOWN CHECK: Ending Cash $77,032.28
+  Cycle 14 ENTRY: 200 shares @ 399.27, 2x calls @ 82.25 (Net Cost: $63,404.00)
+    - EXIT OPTION: Bought back @ 80.20
+    - EXIT STOCK: Sold 200 shares @ 392.78
+    >>> DRAWDOWN CHECK: Ending Cash $76,280.98
+  Cycle 15 ENTRY: 200 shares @ 392.51, 2x calls @ 80.65 (Net Cost: $62,372.00)
