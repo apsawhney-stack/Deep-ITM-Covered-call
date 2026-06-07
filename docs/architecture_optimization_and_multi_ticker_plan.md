@@ -113,3 +113,35 @@ We hypothesize that implementing these changes will resolve our core limitations
 3. **In-Memory Caching (Resolves Disk I/O Bottlenecks):** Keeping parsed options data in a Python dictionary cache avoids reading cached Parquet files from the physical disk repeatedly during parameter sweeps. **Hypothesis:** Since different sweeps (e.g., different Deltas) query the same contract files, accessing data from RAM will speed up the local execution of the backtester by an estimated 5x to 10x.
 4. **Pre-fetching Utility (Resolves Server Throttling):** Pre-downloading the deterministic option history *before* starting the backtest sweep allows the main engine to run completely offline. **Hypothesis:** Offline runs will execute in milliseconds, isolating the backtester from server-side throttles, rate limits, and network latency.
 5. **Universal Index Mapping & ATM IV Fallback (Resolves Ticker Hardcoding):** Dynamically mapping tickers to their CBOE Volatility index and introducing an option-derived IV fallback decouples the backtester from `TSLA`. **Hypothesis:** The backtester will be capable of loading, calculating VRP metrics, and running options strategies for any stock ticker listed on major US exchanges.
+
+---
+
+## 6. Hazards & Implementation Considerations
+
+As we transition to these optimized mechanisms, we must account for several implementation hazards:
+1. **Memory Exhaustion on Broad Expirations:** Wildcard `strike=*` queries can return extremely large datasets (often thousands of rows of intraday records if not managed).
+   * *Mitigation:* We must enforce the `strike_range` parameter (e.g., `strike_range=15`) in the query to limit records to the 31 strikes closest to spot, and set `interval="1d"` to only pull end-of-day quotes rather than high-frequency minute bars.
+2. **Corrupted Cache & Stale Files:** If a pre-fetch download session is terminated early, partial files may be written to `data/cache`. The backtester could read incomplete Parquet files and throw errors or generate inaccurate results.
+   * *Mitigation:* The pre-fetch utility must implement atomic writes (writing to a temporary file first, then renaming on success) and a validation pass verifying row counts and header schema before caching.
+3. **VRP Outliers on Non-Liquid Tickers:** Option-derived implied volatility fallbacks can experience severe price gaps on illiquid underlyings if the ATM mid-price is wide or undefined (bid=0).
+   * *Mitigation:* The fallback algorithm must apply a sanity boundary check. If bid/ask midpoint is wide (e.g. spread ratio $>30\%$) or undefined, default to a historical volatility proxy ($1.25 \times \text{RV}_{\text{YZ, 20}}$) with a hard floor of $20\%$ to prevent division-by-zero or calculation blowups.
+4. **Account Concurrency Collisions:** Even in gRPC mode, the direct client still consumes account-wide concurrency slots. Multiple parallel pre-fetch threads can easily lock out the account.
+   * *Mitigation:* Ensure the pre-fetcher script strictly respects a throttle semaphore limiting concurrent HTTP/gRPC pipelines to 1 below the account maximum.
+
+---
+
+## 7. Verification & Testing Strategy
+
+To ensure zero regression and validate performance, we will implement the following verification strategy:
+1. **Historical Regression Parity Test (Zero-Deviation Verification):**
+   * *Process:* Take a completed parameter run from the current sweep (e.g., DTE 45, Delta 0.80) that has already logged metrics in `results/backtest_results.csv`.
+   * *Verification:* Run the same DTE/Delta backtest using the new gRPC client and Polars loop.
+   * *Success Criteria:* The final daily portfolio value series and metrics (CAGR, Sharpe, MaxDD, Win Rate) must match the legacy run **to the penny** (0.00% variance).
+2. **Pre-fetch Cache Validation Test:**
+   * *Process:* Execute `prefetch_option_data.py` for a new ticker (e.g., `AAPL`) for a 1-month subset.
+   * *Verification:* Disconnect network access (or set `self.is_mock = True`) and run the AAPL simulation.
+   * *Success Criteria:* The backtest engine must run to completion without making any live server connections, proving the pre-fetch coverage is complete.
+3. **Throttling & Backoff Stress Test:**
+   * *Process:* Intentionally trigger rate-limiting by setting the pre-fetcher to 10 concurrent threads.
+   * *Verification:* Monitor the error logging.
+   * *Success Criteria:* The client must successfully catch HTTP `429` responses, apply exponential backoff, retry, and finish the download without crashing.
