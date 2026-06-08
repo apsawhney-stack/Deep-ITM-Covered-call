@@ -41,7 +41,7 @@ def main():
         
         # Run engine
         engine = BacktestEngine(run_config, loader)
-        daily_history = engine.run_backtest()
+        daily_history = engine.run_backtest().to_pandas()
         
         # Calculate metrics
         metrics = calculate_metrics(daily_history, engine.trade_log, run_config, stock_df)
@@ -56,14 +56,14 @@ def main():
         entries = sum(1 for t in log if t['event'] == 'ENTRY')
         
         # Extract attribution
-        # Since metrics might have them in a sub-dict, let's sum them directly from daily_history
-        theta_sum = daily_history['theta_harvest'].sum() if 'theta_harvest' in daily_history.columns else 0.0
-        delta_sum = daily_history['delta_drift'].sum() if 'delta_drift' in daily_history.columns else 0.0
-        gamma_sum = daily_history['gamma_drag'].sum() if 'gamma_drag' in daily_history.columns else 0.0
-        vega_sum = daily_history['vega_impact'].sum() if 'vega_impact' in daily_history.columns else 0.0
-        slippage_sum = daily_history['slippage_cost'].sum() if 'slippage_cost' in daily_history.columns else 0.0
-        gap_sum = daily_history['gap_loss'].sum() if 'gap_loss' in daily_history.columns else 0.0
-        interest_sum = daily_history['interest_earned'].sum() if 'interest_earned' in daily_history.columns else 0.0
+        attrib = metrics.get('attribution', {})
+        theta_sum = attrib.get('theta_harvest', 0.0)
+        delta_sum = attrib.get('delta_drift', 0.0)
+        gamma_sum = attrib.get('gamma_drag', 0.0)
+        vega_sum = attrib.get('vega_impact', 0.0)
+        slippage_sum = attrib.get('slippage_cost', 0.0)
+        gap_sum = attrib.get('gap_loss', 0.0)
+        interest_sum = attrib.get('interest_earned', 0.0)
         
         cagr = metrics['overall']['cagr']
         sharpe = metrics['overall']['sharpe']

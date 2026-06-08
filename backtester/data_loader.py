@@ -1,5 +1,6 @@
 import os
 import math
+import threading
 from datetime import datetime, date, timedelta
 import numpy as np
 import pandas as pd
@@ -21,7 +22,17 @@ class DataLoader:
         self.email = None
         self.password = None
         self.is_mock = False
+        self.contract_cache = {}  # In-memory cache for parsed contract dataframes
+        self.path_locks = {}
+        self.locks_lock = threading.Lock()
+        self.client_lock = threading.Lock()
         self._load_credentials()
+
+    def get_path_lock(self, path):
+        with self.locks_lock:
+            if path not in self.path_locks:
+                self.path_locks[path] = threading.Lock()
+            return self.path_locks[path]
 
     def _load_credentials(self):
         if not os.path.exists(self.creds_path):
@@ -37,21 +48,34 @@ class DataLoader:
         if "your_email" in self.email or "your_password" in self.password or "example.com" in self.email:
             raise RuntimeError("Placeholder credentials detected in creds.txt. Mock mode is disabled.")
 
+    def _write_parquet_atomic(self, df: pl.DataFrame, cache_path: str, required_cols: list):
+        # Verification checks
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            raise ValueError(f"Schema verification failed for {cache_path}. Missing columns: {missing_cols}")
+        if df.height == 0:
+            raise ValueError(f"Schema verification failed for {cache_path}. DataFrame is empty.")
+            
+        temp_path = cache_path + ".tmp"
+        try:
+            df.write_parquet(temp_path)
+            os.replace(temp_path, cache_path)
+        except Exception as e:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            raise e
+
     def get_client(self):
         if self.is_mock:
             raise RuntimeError("DataLoader is in mock mode, which is disabled.")
-        if self.client is None:
-            try:
-                # Prepend portable Java path to environment on macOS
-                java_bin_dir = "/Users/aps/projects/Deep ITM Covered Call/data/jdk/jdk-17.0.19+10/Contents/Home/bin"
-                if os.path.exists(java_bin_dir) and java_bin_dir not in os.environ.get("PATH", ""):
-                    os.environ["PATH"] = java_bin_dir + os.path.pathsep + os.environ.get("PATH", "")
-                
-                # Use a default timeout of 15 seconds to allow fast failover/recovery on slow ThetaData responses
-                self.client = ThetaClient(username=self.email, passwd=self.password, timeout=15)
-            except Exception as e:
-                raise RuntimeError(f"Failed to initialize ThetaClient: {e}. Stopping process as requested.")
-        return self.client
+        with self.client_lock:
+            if self.client is None:
+                try:
+                    # Use native gRPC ThetaClient directly with email and password
+                    self.client = ThetaClient(email=self.email, password=self.password, dataframe_type="polars")
+                except Exception as e:
+                    raise RuntimeError(f"Failed to initialize ThetaClient: {e}. Stopping process as requested.")
+            return self.client
 
     def calculate_yang_zhang_volatility(self, df: pd.DataFrame, window: int = 20) -> pd.Series:
         """
@@ -118,15 +142,16 @@ class DataLoader:
                 print(f"Connecting to ThetaData to download daily bars for {ticker}...")
                 client = self.get_client()
                 if client is not None:
-                    from thetadata import StockReqType, DateRange
-                    stock_df = client.get_hist_stock_REST(
-                        req=StockReqType.EOD,
-                        root=ticker,
-                        date_range=DateRange(start_date, end_date)
+                    # In 1.0.7, call stock_history_eod directly
+                    stock_pl = client.stock_history_eod(
+                        symbol=ticker,
+                        start_date=start_date,
+                        end_date=end_date
                     )
-                    if isinstance(stock_df, pl.DataFrame):
-                        stock_df = stock_df.to_pandas()
-                    stock_df.columns = [col.name.capitalize() if hasattr(col, 'name') else str(col).capitalize() for col in stock_df.columns]
+                    stock_pl = stock_pl.with_columns(pl.col("created").dt.date().alias("date"))
+                    stock_df = stock_pl.select(['date', 'open', 'high', 'low', 'close', 'volume']).to_pandas()
+                    # Capitalize columns to match expected output schema
+                    stock_df.columns = [col.capitalize() for col in stock_df.columns]
             except Exception as e:
                 print(f"ThetaData stock download failed: {e}. Falling back to Yahoo Finance...")
                 stock_df = None
@@ -145,12 +170,30 @@ class DataLoader:
         stock_df['Date'] = pd.to_datetime(stock_df['Date']).dt.date
         stock_df = stock_df.sort_values('Date').reset_index(drop=True)
         
-        # 2. Download Macro data from yfinance (Treasury 3M yield ^IRX, VIX ^VIX, and Tesla Volatility Index ^VXTSLA)
-        print("Downloading Treasury Yield (^IRX), VIX (^VIX), and CBOE Tesla Volatility Index (^VXTSLA) from Yahoo Finance...")
+        # 2. Download Macro data from yfinance (Treasury 3M yield ^IRX, VIX ^VIX, and Volatility Index if mapped)
+        VOL_INDEX_MAP = {
+            "TSLA": "^VXTSLA",
+            "AAPL": "^VXAPL",
+            "MSFT": "^VXMSFT",
+            "AMZN": "^VXAZN",
+            "NVDA": "^VXNVD",
+            "GOOG": "^VXGOG",
+            "META": "^VXMTA",
+            "SPY": "^VIX",
+            "QQQ": "^VXN",
+            "IWM": "^RVX"
+        }
+        
+        vol_symbol = VOL_INDEX_MAP.get(ticker.upper(), None)
+        download_list = ["^IRX", "^VIX"]
+        if vol_symbol:
+            download_list.append(vol_symbol)
+            
+        print(f"Downloading Treasury Yield (^IRX), VIX (^VIX), and Volatility Index ({vol_symbol or 'None'}) from Yahoo Finance...")
         yf_start = (start_date - timedelta(days=365)).strftime("%Y-%m-%d") # pad 252 trading days for VRP rolling stats
         yf_end = (end_date + timedelta(days=2)).strftime("%Y-%m-%d")
         
-        macro_data = yf.download(["^IRX", "^VIX", "^VXTSLA"], start=yf_start, end=yf_end)
+        macro_data = yf.download(download_list, start=yf_start, end=yf_end)
         
         # Extract Close prices
         close_prices = macro_data['Close']
@@ -163,7 +206,7 @@ class DataLoader:
         # Match columns robustly by string containment
         irx_cols = [c for c in close_prices.columns if '^IRX' in str(c)]
         vix_cols = [c for c in close_prices.columns if '^VIX' in str(c)]
-        vxtsla_cols = [c for c in close_prices.columns if '^VXTSLA' in str(c)]
+        vol_cols = [c for c in close_prices.columns if vol_symbol in str(c)] if vol_symbol else []
         
         if irx_cols:
             close_prices['Treasury_Yield_3M'] = close_prices[irx_cols[0]] / 100.0 # Convert percentage (e.g. 4.5 -> 0.045)
@@ -175,8 +218,8 @@ class DataLoader:
         else:
             close_prices['VIX'] = 20.0
             
-        if vxtsla_cols:
-            close_prices['IV_ATM_30'] = close_prices[vxtsla_cols[0]] / 100.0 # Convert CBOE volatility to decimal (e.g. 55.0 -> 0.55)
+        if vol_cols:
+            close_prices['IV_ATM_30'] = close_prices[vol_cols[0]] / 100.0 # Convert CBOE volatility to decimal (e.g. 55.0 -> 0.55)
         else:
             close_prices['IV_ATM_30'] = np.nan
             
@@ -200,12 +243,80 @@ class DataLoader:
         merged['RV_YZ_5'] = self.calculate_yang_zhang_volatility(merged, window=5)
         merged['RV_YZ_5'] = merged['RV_YZ_5'].ffill().bfill()
         
-        # Fallback if IV_ATM_30 is all NaN or has too many NaNs due to delisting
+        # 5. Check if we need to dynamically calculate IV_ATM_30 (Option A)
         if 'IV_ATM_30' not in merged.columns:
             merged['IV_ATM_30'] = np.nan
         if merged['IV_ATM_30'].isna().all() or merged['IV_ATM_30'].isna().sum() > len(merged) * 0.5:
-            print("Warning: CBOE Tesla Volatility Index (^VXTSLA) was not found on yfinance or was delisted. Using 1.25x Yang-Zhang RV (floor 45%) as IV proxy.")
-            merged['IV_ATM_30'] = (merged['RV_YZ_20'] * 1.25).clip(lower=0.45)
+            print(f"Volatility index not found or has too many NaNs for {ticker}. Computing dynamically from EOD option chain gRPC...")
+            try:
+                # Initialize client
+                client = self.get_client()
+                
+                # Fetch list of all expirations for ticker
+                exp_df = client.option_list_expirations(ticker)
+                expirations = exp_df["expiration"].cast(pl.Date).to_list()
+                
+                # For each date in backtest, determine target 30 DTE expiration
+                dates_list = merged['Date'].tolist()
+                closes_list = merged['Close'].tolist()
+                
+                # Group dates by their selected 30 DTE expiration to make batch gRPC calls
+                exp_to_dates = {}
+                for d, close in zip(dates_list, closes_list):
+                    target_expiry = d + timedelta(days=30)
+                    selected_expiry = min(expirations, key=lambda exp_d: abs(exp_d - target_expiry))
+                    if selected_expiry not in exp_to_dates:
+                        exp_to_dates[selected_expiry] = []
+                    exp_to_dates[selected_expiry].append((d, close))
+                
+                # Batch query option greeks per expiration and match ATM strike
+                computed_ivs = {}
+                for exp_date, date_spots in exp_to_dates.items():
+                    try:
+                        min_date = min(d for d, _ in date_spots)
+                        max_date = max(d for d, _ in date_spots)
+                        
+                        # Query all strikes for this expiration over this date range using Standard EOD query
+                        df_greeks = client.option_history_greeks_eod(
+                            symbol=ticker,
+                            expiration=exp_date,
+                            start_date=min_date,
+                            end_date=max_date,
+                            strike="*",
+                            right="call",
+                            strike_range=15
+                        )
+                        
+                        if df_greeks is not None and df_greeks.height > 0:
+                            # Map timestamp to date
+                            df_greeks = df_greeks.with_columns(pl.col("timestamp").dt.date().alias("date"))
+                            
+                            # Group by date to find ATM implied vol for each date
+                            for d, spot in date_spots:
+                                # Filter for this date
+                                df_day = df_greeks.filter(pl.col("date") == d)
+                                if df_day.height > 0:
+                                    # Find the strike closest to spot price
+                                    df_day = df_day.with_columns(
+                                        (pl.col("strike") - spot).abs().alias("strike_diff")
+                                    )
+                                    atm_row = df_day.sort("strike_diff").head(1)
+                                    if atm_row.height > 0:
+                                        iv = atm_row["implied_vol"][0]
+                                        computed_ivs[d] = iv
+                    except Exception as exp_err:
+                        print(f"Warning: Failed to fetch option greeks for expiration {exp_date}: {exp_err}")
+                
+                # Map computed IVs back to DataFrame
+                merged['IV_ATM_30'] = merged['Date'].map(computed_ivs)
+            except Exception as dyn_err:
+                print(f"Warning: Dynamic IV calculation failed: {dyn_err}. Falling back to historical Yang-Zhang RV scaler.")
+                
+        # Final fallback for any remaining NaNs in IV_ATM_30
+        merged['IV_ATM_30'] = merged['IV_ATM_30'].ffill().bfill()
+        if merged['IV_ATM_30'].isna().any():
+            print("Warning: Some dates are missing IV_ATM_30. Falling back to 1.20x Yang-Zhang RV (floor 20%) as IV proxy.")
+            merged['IV_ATM_30'] = merged['IV_ATM_30'].fillna((merged['RV_YZ_20'] * 1.20).clip(lower=0.20))
             
         # Ensure VIX and Treasury rates have no NaNs
         if 'VIX' not in merged.columns:
@@ -216,15 +327,13 @@ class DataLoader:
             merged['Treasury_Yield_3M'] = 0.03
         merged['Treasury_Yield_3M'] = merged['Treasury_Yield_3M'].fillna(0.03)
         
-        # 5. Calculate Volatility Risk Premium (VRP) spread and z-score
+        # 6. Calculate Volatility Risk Premium (VRP) spread and z-score
         # VRP = IV_ATM - RV_YZ
         merged['VRP'] = merged['IV_ATM_30'] - merged['RV_YZ_20']
         
         # Calculate 252-day rolling mean and std of VRP
         merged['VRP_mean_252'] = merged['VRP'].rolling(window=252, min_periods=20).mean().ffill().bfill()
         merged['VRP_std_252'] = merged['VRP'].rolling(window=252, min_periods=20).std().ffill().bfill()
-        
-        # Calculate Normalized VRP z-score
         merged['VRP_z'] = (merged['VRP'] - merged['VRP_mean_252']) / merged['VRP_std_252']
         merged['VRP_z'] = merged['VRP_z'].fillna(0.0) # Fallback if std is 0
         
@@ -250,127 +359,100 @@ class DataLoader:
             return pl.DataFrame()
             
         cache_path = os.path.join(self.cache_dir, f"chain_{ticker}_{trade_date.strftime('%Y%m%d')}_{target_dte}.parquet")
-        if os.path.exists(cache_path):
-            try:
-                return pl.read_parquet(cache_path)
-            except Exception as e:
-                print(f"Options chain cache read error for {trade_date}: {e}. Reloading.")
+        path_lock = self.get_path_lock(cache_path)
+        with path_lock:
+            if os.path.exists(cache_path):
+                try:
+                    return pl.read_parquet(cache_path)
+                except Exception as e:
+                    print(f"Options chain cache read error for {trade_date}: {e}. Reloading.")
 
-        if self.is_mock:
-            raise RuntimeError("DataLoader is in mock/offline mode, which is disabled.")
+            if self.is_mock:
+                raise RuntimeError(f"DataLoader is in mock/offline mode and cache missed for options chain on {trade_date}. Stopping process as requested.")
+                
+            # Implement robust retry loop around ThetaData connection and querying
+            import time
+            max_retries = 5
+            backoff = 2.0
             
-        # Implement robust retry loop around ThetaData connection and querying
-        import time
-        max_retries = 5
-        backoff = 2.0
-        
-        for attempt in range(1, max_retries + 1):
-            try:
-                client = self.get_client()
-                if client is None:
-                    raise RuntimeError("ThetaClient is not initialized")
+            for attempt in range(1, max_retries + 1):
+                try:
+                    client = self.get_client()
+                    if client is None:
+                        raise RuntimeError("ThetaClient is not initialized")
+                        
+                    # 1. Fetch expirations using direct client
+                    exp_df = client.option_list_expirations(ticker)
+                    expirations = exp_df["expiration"].cast(pl.Date).to_list()
                     
-                from thetadata import OptionReqType, OptionRight, DateRange
-                
-                # 1. Fetch expirations using REST
-                expirations = client.get_expirations_REST(ticker)
-                
-                # Find closest expiration to target_dte
-                target_expiry = trade_date + timedelta(days=target_dte)
-                exp_dates = []
-                for e in expirations:
-                    if hasattr(e, 'to_pydatetime'):
-                        exp_dates.append(e.to_pydatetime().date())
-                    elif hasattr(e, 'date'):
-                        exp_dates.append(e.date())
-                    else:
-                        exp_dates.append(e)
-                
-                selected_expiry = min(exp_dates, key=lambda d: abs(d - target_expiry))
-                
-                # 2. Load stock price to filter strikes (faster)
-                filepath = os.path.join(self.data_dir, f"{ticker}_daily.parquet")
-                stock_close = 200.0
-                if os.path.exists(filepath):
-                    stock_db = pd.read_parquet(filepath)
-                    stock_db['Date'] = pd.to_datetime(stock_db['Date']).dt.date
-                    day_row = stock_db[stock_db['Date'] == trade_date]
-                    if not day_row.empty:
-                        stock_close = float(day_row['Close'].values[0])
-                    else:
-                        stock_close = float(stock_db.iloc[-1]['Close'])
-                
-                # 3. Fetch strikes using REST
-                strikes = client.get_strikes_REST(ticker, selected_expiry)
-                
-                # Filter strikes within 80% to 120% of stock price to reduce calls
-                filtered_strikes = [float(s) for s in strikes if 0.8 * stock_close <= float(s) <= 1.2 * stock_close]
-                
-                # 4. Fetch EOD quotes for calls in parallel (4 concurrent REST API calls)
-                from concurrent.futures import ThreadPoolExecutor, as_completed
-                records = []
-                
-                def fetch_strike_data(strike):
-                    try:
-                        df = client.get_hist_option_REST(
-                            req=OptionReqType.EOD_QUOTE_GREEKS,
-                            root=ticker,
-                            exp=selected_expiry,
-                            strike=strike,
-                            right=OptionRight.CALL,
-                            date_range=DateRange(trade_date, trade_date)
+                    # Find closest expiration to target_dte
+                    target_expiry = trade_date + timedelta(days=target_dte)
+                    selected_expiry = min(expirations, key=lambda d: abs(d - target_expiry))
+                    
+                    # 2. Query EOD Greeks chain using EOD gRPC wildcard call
+                    df_chain = client.option_history_greeks_eod(
+                        symbol=ticker,
+                        expiration=selected_expiry,
+                        start_date=trade_date,
+                        end_date=trade_date,
+                        strike="*",
+                        right="call",
+                        strike_range=15
+                    )
+                    
+                    if df_chain is not None and df_chain.height > 0:
+                        # Rename columns to match old backtester expectations
+                        if "implied_vol" in df_chain.columns:
+                            df_chain = df_chain.rename({"implied_vol": "implied_volatility"})
+                        if "timestamp" in df_chain.columns:
+                            df_chain = df_chain.with_columns(pl.col("timestamp").dt.date().alias("date"))
+                        if "open_interest" not in df_chain.columns:
+                            df_chain = df_chain.with_columns(pl.lit(1000).alias("open_interest"))
+                        if "volume" not in df_chain.columns:
+                            df_chain = df_chain.with_columns(pl.lit(150).alias("volume"))
+                            
+                        # Lowercase all column names to be safe
+                        df_chain = df_chain.rename({col: col.lower() for col in df_chain.columns})
+                        
+                        # Generate OSI symbol
+                        df_chain = df_chain.with_columns(
+                            pl.struct(["symbol", "expiration", "right", "strike"]).map_elements(
+                                lambda r: f"{r['symbol']}{datetime.strptime(r['expiration'], '%Y-%m-%d').strftime('%y%m%d')}{'C' if r['right'].upper().startswith('C') else 'P'}{int(r['strike'] * 1000):08d}",
+                                return_dtype=pl.String
+                            ).alias("symbol")
                         )
-                        if df is not None and not df.empty:
-                            row = df.iloc[0]
-                            row_dict = {col.name.lower() if hasattr(col, 'name') else str(col).lower(): val for col, val in row.items()}
-                            
-                            strike_code = f"{int(strike * 1000):08d}"
-                            osi_symbol = f"{ticker}{selected_expiry.strftime('%y%m%d')}C{strike_code}"
-                            
-                            return {
-                                'symbol': osi_symbol,
-                                'right': 'C',
-                                'strike': strike,
-                                'expiry': selected_expiry.strftime("%Y-%m-%d"),
-                                'bid': float(row_dict.get('bid', 0)),
-                                'ask': float(row_dict.get('ask', 0)),
-                                'delta': float(row_dict.get('delta', 0.5)),
-                                'implied_volatility': float(row_dict.get('implied_vol', 0.5)),
-                                'open_interest': int(row_dict.get('open_interest', 1000)) if 'open_interest' in row_dict else 1000,
-                                'volume': int(row_dict.get('volume', 150)) if 'volume' in row_dict else 150
-                            }
-                    except Exception:
-                        pass
-                    return None
-
-                with ThreadPoolExecutor(max_workers=4) as executor:
-                    futures = {executor.submit(fetch_strike_data, strike): strike for strike in filtered_strikes}
-                    for future in as_completed(futures):
-                        res = future.result()
-                        if res is not None:
-                            records.append(res)
-                            
-                if not records:
+                        
+                        # Format right column to 'C' or 'P'
+                        df_chain = df_chain.with_columns(
+                            pl.col("right").map_elements(lambda r: 'C' if r.upper().startswith('C') else 'P', return_dtype=pl.String)
+                        )
+                        
+                        # Rename expiration to expiry
+                        df_chain = df_chain.rename({"expiration": "expiry"})
+                        
+                        # Write to cache
+                        self._write_parquet_atomic(df_chain, cache_path, [
+                            "symbol", "right", "strike", "expiry", "bid", "ask", "delta", "implied_volatility", "open_interest", "volume"
+                        ])
+                        return df_chain
+                        
                     raise RuntimeError("No records returned from options chain query")
                     
-                df_pl = pl.DataFrame(records)
-                try:
-                    df_pl.write_parquet(cache_path)
-                except Exception as cache_err:
-                    print(f"Failed to cache options chain: {cache_err}")
-                return df_pl
-                
-            except Exception as e:
-                print(f"Warning: get_options_chain failed on attempt {attempt}/{max_retries}: {e}")
-                if attempt == max_retries:
-                    raise RuntimeError(f"Failed to fetch options chain from ThetaData after {max_retries} attempts: {e}. Stopping process as requested.")
-                
-                sleep_time = backoff * (0.8 + 0.4 * np.random.rand())
-                print(f"Waiting {sleep_time:.2f} seconds before retrying...")
-                time.sleep(sleep_time)
-                backoff *= 2.0
+                except Exception as e:
+                    if "no data found" in str(e).lower():
+                        print(f"No options chain data found on ThetaData for {trade_date}. Returning empty chain.")
+                        return pl.DataFrame()
+                    print(f"Warning: get_options_chain failed on attempt {attempt}/{max_retries}: {e}")
+                    if attempt == max_retries:
+                        raise RuntimeError(f"Failed to fetch options chain from ThetaData after {max_retries} attempts: {e}. Stopping process as requested.")
+                    
+                    sleep_time = backoff * (0.8 + 0.4 * np.random.rand())
+                    print(f"Waiting {sleep_time:.2f} seconds before retrying...")
+                    time.sleep(sleep_time)
+                    backoff *= 2.0
                 
         raise RuntimeError("DataLoader entered mock mode path in get_options_chain, which is disabled.")
+
 
     def get_option_contract_history(self, option_symbol: str, start_date: date, end_date: date) -> pl.DataFrame:
         """
@@ -397,153 +479,103 @@ class DataLoader:
         expiry_date = datetime.strptime(expiry_part, "%y%m%d").date()
         strike_part = option_symbol[cp_idx+1:]
         strike = float(strike_part) / 1000.0
+        right = "call" if option_symbol[cp_idx] == 'C' else "put"
         
-        from thetadata import OptionRight, OptionReqType, DateRange
-        right = OptionRight.CALL if option_symbol[cp_idx] == 'C' else OptionRight.PUT
+        # 1. Check in-memory cache first
+        if option_symbol in self.contract_cache:
+            df = self.contract_cache[option_symbol]
+            return df.filter((pl.col("date") >= start_date) & (pl.col("date") <= end_date))
 
         cache_path = os.path.join(self.cache_dir, f"{option_symbol}.parquet")
         
-        # Check if cache covers requested range
-        if os.path.exists(cache_path):
-            try:
-                df = pl.read_parquet(cache_path)
-                df = df.rename({col: col.lower() for col in df.columns})
-                if df.height > 0:
-                    cached_dates = df['date'].to_list()
-                    parsed_dates = []
-                    for d in cached_dates:
-                        if isinstance(d, str):
-                            parsed_dates.append(datetime.strptime(d[:10], "%Y-%m-%d").date())
-                        elif hasattr(d, 'date'):
-                            parsed_dates.append(d.date())
-                        else:
-                            parsed_dates.append(d)
-                    min_cached = min(parsed_dates)
-                    max_cached = max(parsed_dates)
-                    
-                    if min_cached <= start_date and (max_cached >= end_date or max_cached >= expiry_date):
-                        # Cache covers requested date range, return it directly
-                        df = df.with_columns(pl.Series("date", parsed_dates))
-                        return df.filter((pl.col("date") >= start_date) & (pl.col("date") <= end_date))
-            except Exception as cache_err:
-                print(f"Cache read error for {option_symbol}: {cache_err}. Reloading from source.")
-
-        if self.is_mock:
-            raise RuntimeError("DataLoader is in mock/offline mode, which is disabled.")
-            
-        # Fetch all history up to the day before expiry date to avoid the server-side Greeks timeout on expiration day (DTE=0)
-        # Cap at yesterday to avoid querying future dates that do not exist yet on the server
-        fetch_end_date = min(expiry_date - timedelta(days=1), date.today() - timedelta(days=1))
-        
-        # Check if the requested range overlaps with known TSLA options data gaps on ThetaData (2026-01-20 and 2026-01-21)
-        has_gap = False
-        for gap_date in [date(2026, 1, 20), date(2026, 1, 21)]:
-            if start_date <= gap_date <= fetch_end_date:
-                has_gap = True
-                break
-        
-        client = self.get_client()
-        if client is not None:
-            # Attempt 1: Fetch the entire range in one call using REST
-            if not has_gap:
+        path_lock = self.get_path_lock(cache_path)
+        with path_lock:
+            # 2. Check Parquet disk cache
+            if os.path.exists(cache_path):
                 try:
-                    df = client.get_hist_option_REST(
-                        req=OptionReqType.EOD_QUOTE_GREEKS,
-                        root=root,
-                        exp=expiry_date,
-                        strike=strike,
-                        right=right,
-                        date_range=DateRange(start_date, fetch_end_date)
+                    df = pl.read_parquet(cache_path)
+                    df = df.rename({col: col.lower() for col in df.columns})
+                    if df.height > 0:
+                        cached_dates = df['date'].to_list()
+                        parsed_dates = []
+                        for d in cached_dates:
+                            if isinstance(d, str):
+                                parsed_dates.append(datetime.strptime(d[:10], "%Y-%m-%d").date())
+                            elif hasattr(d, 'date'):
+                                parsed_dates.append(d.date())
+                            else:
+                                parsed_dates.append(d)
+                        min_cached = min(parsed_dates)
+                        max_cached = max(parsed_dates)
+                        
+                        if self.is_mock or (min_cached <= start_date and (max_cached >= end_date or max_cached >= expiry_date)):
+                            # Cache covers requested date range or we are in mock mode, return it directly
+                            df = df.with_columns(pl.Series("date", parsed_dates))
+                            self.contract_cache[option_symbol] = df  # Store in in-memory cache
+                            return df.filter((pl.col("date") >= start_date) & (pl.col("date") <= end_date))
+                except Exception as cache_err:
+                    print(f"Cache read error for {option_symbol}: {cache_err}. Reloading from source.")
+
+            if self.is_mock:
+                raise RuntimeError(f"DataLoader is in mock/offline mode and cache missed for {option_symbol}. Stopping process as requested.")
+                
+            # Fetch all history up to the day before expiry date to avoid the server-side Greeks timeout on expiration day (DTE=0)
+            # Cap at yesterday to avoid querying future dates that do not exist yet on the server
+            fetch_end_date = min(expiry_date - timedelta(days=1), date.today() - timedelta(days=1))
+            
+            # Implement robust retry loop around ThetaData connection and querying
+            import time
+            max_retries = 5
+            backoff = 2.0
+            
+            for attempt in range(1, max_retries + 1):
+                try:
+                    client = self.get_client()
+                    if client is None:
+                        raise RuntimeError("ThetaClient is not initialized")
+                        
+                    # Query EOD Greeks history using direct gRPC client
+                    df_pl = client.option_history_greeks_eod(
+                        symbol=root,
+                        expiration=expiry_date,
+                        start_date=start_date,
+                        end_date=fetch_end_date,
+                        strike=f"{strike:.2f}",
+                        right=right
                     )
                     
-                    df.columns = [col.name.lower() if hasattr(col, 'name') else str(col).lower() for col in df.columns]
-                    
-                    if 'implied_vol' in df.columns:
-                        df = df.rename(columns={'implied_vol': 'implied_volatility'})
-                    if 'date' in df.columns:
-                        df['date'] = pd.to_datetime(df['date']).dt.date
-                    if 'open_interest' not in df.columns:
-                        df['open_interest'] = 1000
-                    if 'volume' not in df.columns:
-                        df['volume'] = 150
-                        
-                    df_pl = pl.from_pandas(df)
-                    if df_pl.height > 0:
-                        df_pl.write_parquet(cache_path)
-                        return df_pl.filter((pl.col("date") >= start_date) & (pl.col("date") <= end_date))
-                except Exception as e:
-                    print(f"Warning: Combined range REST query for {option_symbol} failed/timed out: {e}. Falling back to day-by-day REST queries.")
-            else:
-                print(f"Skipping combined range query for {option_symbol} due to overlap with known data gaps. Querying day-by-day instead.")
-                
-            # Attempt 2: Fallback to querying day-by-day in parallel (4 concurrent REST API calls)
-            import time
-            import numpy as np
-            from concurrent.futures import ThreadPoolExecutor, as_completed
-            
-            # Generate calendar dates, skipping known data gap dates
-            curr = start_date
-            dates = []
-            while curr <= fetch_end_date:
-                # Only query trading days (weekdays) and skip known gaps
-                if curr.weekday() < 5 and curr not in [date(2026, 1, 20), date(2026, 1, 21)]:
-                    dates.append(curr)
-                curr += timedelta(days=1)
-                
-            daily_dfs = []
-            
-            def fetch_day_data(d):
-                max_day_retries = 3
-                day_backoff = 1.0
-                for day_attempt in range(1, max_day_retries + 1):
-                    try:
-                        day_df = client.get_hist_option_REST(
-                            req=OptionReqType.EOD_QUOTE_GREEKS,
-                            root=root,
-                            exp=expiry_date,
-                            strike=strike,
-                            right=right,
-                            date_range=DateRange(d, d)
-                        )
-                        if day_df is not None and not day_df.empty:
-                            return day_df
-                        break
-                    except Exception as day_err:
-                        if day_attempt == max_day_retries:
-                            break
-                        sleep_time = day_backoff * (0.8 + 0.4 * np.random.rand())
-                        time.sleep(sleep_time)
-                        day_backoff *= 2.0
-                return None
-
-            with ThreadPoolExecutor(max_workers=4) as executor:
-                futures = {executor.submit(fetch_day_data, d): d for d in dates}
-                for future in as_completed(futures):
-                    res = future.result()
-                    if res is not None:
-                        daily_dfs.append(res)
+                    if df_pl is not None and df_pl.height > 0:
+                        # Rename columns to match old backtester expectations
+                        if "implied_vol" in df_pl.columns:
+                            df_pl = df_pl.rename({"implied_vol": "implied_volatility"})
+                        if "timestamp" in df_pl.columns:
+                            df_pl = df_pl.with_columns(pl.col("timestamp").dt.date().alias("date"))
+                        if "open_interest" not in df_pl.columns:
+                            df_pl = df_pl.with_columns(pl.lit(1000).alias("open_interest"))
+                        if "volume" not in df_pl.columns:
+                            df_pl = df_pl.with_columns(pl.lit(150).alias("volume"))
                             
-            if not daily_dfs:
-                raise RuntimeError(f"Failed to fetch contract history from ThetaData after combined range timeout and day-by-day fallback. Stopping process as requested.")
-                
-            # Combine all successfully fetched daily dataframes
-            combined_df = pd.concat(daily_dfs, ignore_index=True)
-            combined_df.columns = [col.name.lower() if hasattr(col, 'name') else str(col).lower() for col in combined_df.columns]
-            
-            if 'implied_vol' in combined_df.columns:
-                combined_df = combined_df.rename(columns={'implied_vol': 'implied_volatility'})
-            if 'date' in combined_df.columns:
-                combined_df['date'] = pd.to_datetime(combined_df['date']).dt.date
-            if 'open_interest' not in combined_df.columns:
-                combined_df['open_interest'] = 1000
-            if 'volume' not in combined_df.columns:
-                combined_df['volume'] = 150
-                
-            df_pl = pl.from_pandas(combined_df)
-            if df_pl.height == 0:
-                raise RuntimeError(f"Empty history returned for {option_symbol} from day-by-day fallback.")
-                
-            df_pl.write_parquet(cache_path)
-            return df_pl.filter((pl.col("date") >= start_date) & (pl.col("date") <= end_date))
-            
-        raise RuntimeError("DataLoader entered mock mode path in get_option_contract_history, which is disabled.")
+                        # Lowercase all column names to be safe
+                        df_pl = df_pl.rename({col: col.lower() for col in df_pl.columns})
+                        
+                        # Write to Parquet disk cache and in-memory cache
+                        self._write_parquet_atomic(df_pl, cache_path, ["date", "bid", "ask", "delta", "implied_volatility"])
+                        self.contract_cache[option_symbol] = df_pl
+                        
+                        return df_pl.filter((pl.col("date") >= start_date) & (pl.col("date") <= end_date))
+                        
+                    raise RuntimeError("No records returned from option contract history query")
+                except Exception as e:
+                    if "no data found" in str(e).lower():
+                        print(f"No option contract history found on ThetaData for {option_symbol}. Returning empty history.")
+                        return pl.DataFrame()
+                    print(f"Warning: get_option_contract_history failed on attempt {attempt}/{max_retries} for {option_symbol}: {e}")
+                    if attempt == max_retries:
+                        raise RuntimeError(f"Failed to fetch option contract history from ThetaData after {max_retries} attempts: {e}. Stopping process as requested.")
+                    
+                    sleep_time = backoff * (0.8 + 0.4 * np.random.rand())
+                    print(f"Waiting {sleep_time:.2f} seconds before retrying...")
+                    time.sleep(sleep_time)
+                    backoff *= 2.0
+                    
+            raise RuntimeError("DataLoader entered mock mode path in get_option_contract_history, which is disabled.")

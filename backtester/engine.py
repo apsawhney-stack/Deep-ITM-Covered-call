@@ -2,7 +2,6 @@ import os
 import random
 from datetime import datetime, date, timedelta
 import numpy as np
-import pandas as pd
 import polars as pl
 from .positions import PositionTracker
 from .data_loader import DataLoader
@@ -123,8 +122,10 @@ class BacktestEngine:
         for x in calls[expiry_col].unique().to_list():
             if isinstance(x, str):
                 exp_date = datetime.strptime(x[:10], "%Y-%m-%d").date()
-            elif isinstance(x, (datetime, date)):
-                exp_date = pd.to_datetime(x).date()
+            elif isinstance(x, datetime):
+                exp_date = x.date()
+            elif isinstance(x, date):
+                exp_date = x
             else:
                 continue
             if exp_date >= min_date:
@@ -160,24 +161,27 @@ class BacktestEngine:
         # Sort candidates by strike to allow sequential scanning
         # Since we scan toward-the-money (lower delta, meaning higher strike price for calls),
         # sorting strikes ascending is perfect.
-        candidates = expiry_filtered.sort(strike_col).to_pandas()
+        candidates = expiry_filtered.sort(strike_col)
         
         # Find index of the contract closest to target delta
-        candidates['delta_diff'] = (candidates[delta_col].abs() - target_delta).abs()
-        best_idx = candidates['delta_diff'].idxmin()
+        delta_diff = (candidates[delta_col].abs() - target_delta).abs()
+        best_idx = delta_diff.arg_min()
+        
+        # Convert to list of dicts for fast pure Polars/Python traversal
+        candidate_dicts = candidates.to_dicts()
         
         # Scan sequentially toward the money (downward Delta / upward strike)
         # For call options, strike price and Delta are inversely related:
         # Lower Delta means HIGHER strike price.
         # So we scan from best_idx forward (to higher index/strikes).
-        for idx in range(best_idx, len(candidates)):
-            row = candidates.iloc[idx]
+        for idx in range(best_idx, len(candidate_dicts)):
+            row = candidate_dicts[idx]
             
             # Extract parameters
             bid = float(row[bid_col])
             ask = float(row[ask_col])
-            oi = int(row[oi_col]) if not pd.isna(row[oi_col]) else 0
-            vol = int(row[vol_col]) if not pd.isna(row[vol_col]) else 0
+            oi = int(row[oi_col]) if row[oi_col] is not None else 0
+            vol = int(row[vol_col]) if row[vol_col] is not None else 0
             delta = float(row[delta_col])
             strike = float(row[strike_col])
             symbol = row[symbol_col]
@@ -227,21 +231,27 @@ class BacktestEngine:
             end_str=self.config['end_date']
         )
         
-        # Convert daily data to list of dicts for event loop processing
-        df = df_pl.to_pandas().sort_values('Date').reset_index(drop=True)
-        
         # Filter for the requested start_date and end_date to avoid cache range bleed
         start_date_obj = datetime.strptime(self.config['start_date'], "%Y-%m-%d").date()
         end_date_obj = datetime.strptime(self.config['end_date'], "%Y-%m-%d").date()
-        df['Date_parsed'] = pd.to_datetime(df['Date']).dt.date
-        df = df[(df['Date_parsed'] >= start_date_obj) & (df['Date_parsed'] <= end_date_obj)].reset_index(drop=True)
-        df = df.drop(columns=['Date_parsed'])
+        
+        # Ensure Date column is cast to Date type and sorted
+        df_pl = df_pl.with_columns(
+            pl.col("Date").cast(pl.Date)
+        ).sort("Date")
+        
+        df_filtered = df_pl.filter(
+            (pl.col("Date") >= start_date_obj) & (pl.col("Date") <= end_date_obj)
+        )
+        
+        # Convert to list of dicts for fast traversal
+        df_dicts = df_filtered.to_dicts()
         
         # Simulation variables
         prev_date = None
         
         print("Starting Daily Simulation Loop...")
-        for i, row in df.iterrows():
+        for row in df_dicts:
             current_date = row['Date']
             if hasattr(current_date, 'date'):
                 current_date = current_date.date()
@@ -287,12 +297,14 @@ class BacktestEngine:
                     if len(opt_history) > 0:
                         # Get the most recent quote
                         opt_history_sorted = opt_history.sort('date')
-                        last_quote = opt_history_sorted.tail(1).to_pandas().iloc[0]
+                        last_quote = opt_history_sorted.row(-1, named=True)
                         quote_date = last_quote['date']
                         if isinstance(quote_date, str):
                             quote_date = datetime.strptime(quote_date[:10], "%Y-%m-%d").date()
-                        elif isinstance(quote_date, (datetime, date)):
-                            quote_date = pd.to_datetime(quote_date).date()
+                        elif isinstance(quote_date, datetime):
+                            quote_date = quote_date.date()
+                        elif isinstance(quote_date, date):
+                            quote_date = quote_date
                             
                         D_stale = (current_date - quote_date).days
                         
@@ -452,6 +464,7 @@ class BacktestEngine:
                             
                             self.tracker.active_option = None
                             self.tracker.shares = 0
+                            self.tracker.contracts = 0
                             self.tracker.cash += proceeds
                             
                             # Run HWM sweep
@@ -687,7 +700,9 @@ class BacktestEngine:
             'treasury_rate': treasury_rate
         })
 
-    def _compile_history(self) -> pd.DataFrame:
-        hist_df = pd.DataFrame(self.daily_history)
-        hist_df['date'] = pd.to_datetime(hist_df['date'])
+    def _compile_history(self) -> pl.DataFrame:
+        hist_df = pl.DataFrame(self.daily_history)
+        hist_df = hist_df.with_columns(
+            pl.col("date").cast(pl.Date)
+        )
         return hist_df
