@@ -475,5 +475,6 @@ def calculate_metrics(daily_df: pd.DataFrame, trade_log: list, config: dict, sto
             'interest_earned': total_interest
         },
         'assignment_freq': assignment_freq,
-        'avg_entry_vrp_z': avg_entry_vrp_z
+        'avg_entry_vrp_z': avg_entry_vrp_z,
+        'daily_df': daily_df
     }

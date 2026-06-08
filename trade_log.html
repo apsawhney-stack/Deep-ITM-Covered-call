@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep ITM Covered Call Backtester - Trade Log Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: hsl(222, 47%, 6%);
+            --bg-surface: hsl(223, 47%, 11%);
+            --bg-surface-elevated: hsl(223, 45%, 16%);
+            --text-primary: hsl(210, 40%, 98%);
+            --text-secondary: hsl(215, 20%, 75%);
+            --text-muted: hsl(215, 15%, 55%);
+            
+            --accent-blue: hsl(210, 100%, 60%);
+            --accent-purple: hsl(265, 100%, 65%);
+            --accent-green: hsl(145, 80%, 50%);
+            --accent-red: hsl(355, 85%, 55%);
+            --accent-orange: hsl(35, 100%, 55%);
+            --accent-yellow: hsl(50, 100%, 50%);
+            
+            --border-glow: hsla(210, 100%, 65%, 0.15);
+            --border-light: hsla(215, 20%, 80%, 0.08);
+            
+            --shadow-lg: 0 12px 40px -10px rgba(0, 0, 0, 0.5);
+            --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2.5rem;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Container Layout */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header styles */
+        header {
+            margin-bottom: 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 1.5rem;
+        }
+
+        .header-title h1 {
+            font-size: 2.25rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 0.25rem;
+        }
+
+        .strategy-badge {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-light);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        /* Summary Cards Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-glow);
+            box-shadow: 0 16px 45px -8px rgba(59, 130, 246, 0.15);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-blue);
+        }
+
+        .card.card-win::before { background: var(--accent-green); }
+        .card.card-loss::before { background: var(--accent-red); }
+        .card.card-swept::before { background: var(--accent-purple); }
+
+        .card-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-primary);
+        }
+
+        .card-subtext {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Exit Reasons Guide (Legend) */
+        .legend-section {
+            background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(20, 26, 41, 0.4) 100%);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .legend-title {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px dashed rgba(255, 255, 255, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .badge-stoploss { background-color: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-expiration { background-color: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-roll { background-color: rgba(168, 85, 247, 0.15); color: var(--accent-purple); border: 1px solid rgba(168, 85, 247, 0.3); }
+        .badge-trend { background-color: rgba(249, 115, 22, 0.15); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.3); }
+        .badge-vrp { background-color: rgba(234, 179, 8, 0.15); color: var(--accent-yellow); border: 1px solid rgba(234, 179, 8, 0.3); }
+        .badge-hazard { background-color: rgba(236, 72, 153, 0.15); color: hsl(327, 85%, 65%); border: 1px solid rgba(236, 72, 153, 0.3); }
+        .badge-active { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .legend-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Filter Controls */
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-filter {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-filter:hover, .btn-filter.active {
+            background-color: var(--bg-surface-elevated);
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .search-box {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            min-width: 250px;
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
+        }
+
+        /* Trade List Cards Layout */
+        .trade-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .cycle-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition-smooth);
+        }
+
+        .cycle-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Header of Cycle Card */
+        .cycle-header {
+            padding: 1.25rem 1.5rem;
+            display: grid;
+            grid-template-columns: 80px 140px 1fr 140px 100px 40px;
+            align-items: center;
+            cursor: pointer;
+            gap: 1rem;
+            user-select: none;
+        }
+
+        .cycle-num {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        .cycle-dates {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .cycle-info {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .cycle-info-item {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .cycle-info-item strong {
+            color: var(--text-primary);
+        }
+
+        .cycle-status {
+            text-align: right;
+        }
+
+        .cycle-pnl {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-align: right;
+        }
+
+        .pnl-gain { color: var(--accent-green); }
+        .pnl-loss { color: var(--accent-red); }
+
+        .cycle-toggle-icon {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .cycle-card.expanded .cycle-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Expanded Details of Cycle Card */
+        .cycle-details {
+            border-top: 1px solid var(--border-light);
+            padding: 1.5rem;
+            background-color: rgba(20, 26, 41, 0.3);
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            display: none;
+        }
+
+        .cycle-card.expanded .cycle-details {
+            display: block;
+        }
+
+        /* Timeline Flow within Details */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--border-light);
+        }
+
+        .timeline-event {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .timeline-event:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -2rem;
+            top: 6px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: var(--bg-surface-elevated);
+            border: 2px solid var(--text-muted);
+            transform: translateX(1px);
+        }
+
+        .timeline-dot.dot-entry { border-color: var(--accent-blue); background-color: var(--bg-base); }
+        .timeline-dot.dot-roll { border-color: var(--accent-purple); background-color: var(--bg-base); }
+        .timeline-dot.dot-exit { border-color: var(--accent-red); background-color: var(--bg-base); }
+        .timeline-dot.dot-trend { border-color: var(--accent-orange); background-color: var(--bg-base); }
+        .timeline-dot.dot-vrp { border-color: var(--accent-yellow); background-color: var(--bg-base); }
+
+        .timeline-content {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .event-type {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .event-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .event-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .event-data {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .data-item {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .data-item strong {
+            color: var(--text-primary);
+        }
+
+        .event-pnl {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Attribution Metrics Block */
+        .attribution-box {
+            background-color: rgba(255, 255, 255, 0.01);
+            border: 1px dashed var(--border-light);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .attribution-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .attribution-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .attrib-item {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .attrib-item strong {
+            display: block;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-top: 0.15rem;
+        }
+
+        /* Responsive styling */
+        @media (max-width: 900px) {
+            .cycle-header {
+                grid-template-columns: 80px 140px 1fr 100px 40px;
+            }
+            .cycle-info-item:nth-child(n+3) {
+                display: none;
+            }
+        }
+
+        @media (max-width: 650px) {
+            body {
+                padding: 1.25rem;
+            }
+            .cycle-header {
+                grid-template-columns: 1fr 100px 30px;
+                grid-template-rows: auto auto;
+                row-gap: 0.5rem;
+            }
+            .cycle-num {
+                grid-row: 1;
+                grid-column: 1;
+            }
+            .cycle-dates {
+                grid-row: 2;
+                grid-column: 1;
+            }
+            .cycle-info {
+                display: none;
+            }
+            .cycle-status {
+                grid-row: 1;
+                grid-column: 2;
+            }
+            .cycle-pnl {
+                grid-row: 2;
+                grid-column: 2;
+                font-size: 1.1rem;
+            }
+            .cycle-toggle-icon {
+                grid-row: 1 / span 2;
+                grid-column: 3;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <header>
+            <div class="header-title">
+                <h1>Deep ITM Covered Call Backtester</h1>
+                <p>Systematic Options Sweep Execution Log • Historical Diagnostics</p>
+            </div>
+            <div class="strategy-badge" id="strategyBadge">
+                TSLA • DTE 45 • Delta 0.70 Strategy
+            </div>
+        </header>
+
+        <!-- Summary Statistics -->
+        <div class="summary-grid">
+            <div class="card card-win" id="winRateCard">
+                <div class="card-label">Overall Win Rate</div>
+                <div class="card-value" id="winRateVal">46.2%</div>
+                <div class="card-subtext" id="winRateSub">6 Winning Cycles / 7 Losing Cycles</div>
+            </div>
+            <div class="card card-swept" id="netProfitCard">
+                <div class="card-label">Cumulative Net Return</div>
+                <div class="card-value pnl-gain" id="netProfitVal">+$6,339.50</div>
+                <div class="card-subtext">Excludes active strategy yield sweeps</div>
+            </div>
+            <div class="card" id="avgReturnCard">
+                <div class="card-label">Avg Return / Cycle</div>
+                <div class="card-value _AVGpnl-gain" id="avgReturnVal">+$487.65</div>
+                <div class="card-subtext">Across 13 completed cycles</div>
+            </div>
+            <div class="card" id="activeCyclesCard">
+                <div class="card-label">Active Trade Status</div>
+                <div class="card-value" id="activeCyclesVal" style="color: var(--accent-orange);">1 Position</div>
+                <div class="card-subtext">DTE 45 roll active on TSLA</div>
+            </div>
+        </div>
+
+        <!-- System Exit Reasons Reference (Guide) -->
+        <div class="legend-section">
+            <h2 class="legend-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 16a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm1-5.07A1.33 1.33 0 0 0 12 11.5a1.5 1.5 0 0 1-3 0A3.33 3.33 0 0 1 12.3 8.3c1 0 1.7.7 1.7 1.7 0 .8-.5 1.2-1 2z"/></svg>
+                The 6 Systematic Exit & Roll Reasons
+            </h2>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <span class="badge badge-trend">Trend Exit</span>
+                    <div class="legend-desc"><strong>EMA-50 Crossover:</strong> Triggered at 3:45 PM close when the stock price falls below the 50-day EMA by 5% or more. Liquidates underlying stock and option.</div>
+                </div>
+                <div class="legend-item">
+                    <span class="badge badge-vrp">VRP Halt</span>
+                    <div class="legend-desc"><strong>Underpriced Volatility:</strong> VRP z-score drops below -1.0. Halts all option writing and liquidates stock/options immediately to lock in capital to 100% cash.</div>
+                </div>
+                <div class="legend-item">
+                    <span class="badge badge-roll">Early Roll</span>
+                    <div class="legend-desc"><strong>Extrinsic Exhaustion:</strong> Decay of the option's extrinsic value to &le; 15% of the entry premium. Triggers buyback of active option and writes a new contract.</div>
+                </div>
+                <div class="legend-item">
+                    <span class="badge badge-stoploss">Stop Loss</span>
+                    <div class="legend-desc"><strong>Static Cushion Exit:</strong> Intraday low touches $S_{	ext{stop}} = 0.92 	imes (S_{	ext{entry}} - P_{	ext{entry}})$. Stock exits pessimistically, option closed at EOD Ask.</div>
+                </div>
+                <div class="legend-item">
+                    <span class="badge badge-expiration">Expiration</span>
+                    <div class="legend-desc"><strong>Option Settlement:</strong> Contract matures. Shares are called away if Stock > Strike, else the option expires worthless and stock shares are retained.</div>
+                </div>
+                <div class="legend-item">
+                    <span class="badge badge-hazard">Assignment</span>
+                    <div class="legend-desc"><strong>Early Assignment Hazard:</strong> Probabilistic assignment risk triggered daily when DTE &le; 10 and option extrinsic &le; $0.25.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls (Filters, Search) -->
+        <div class="controls-row">
+            <div class="filter-group" id="filterGroup">
+                <button class="btn-filter active" onclick="filterLogs('ALL')" id="filterAll">All Reasons</button>
+                <button class="btn-filter" onclick="filterLogs('TREND')" id="filterTrend">Trend Exit</button>
+                <button class="btn-filter" onclick="filterLogs('VRP')" id="filterVrp">VRP Halt</button>
+                <button class="btn-filter" onclick="filterLogs('ROLL')" id="filterRoll">Early Roll</button>
+                <button class="btn-filter" onclick="filterLogs('STOPLOSS')" id="filterStoploss">Stop Loss</button>
+                <button class="btn-filter" onclick="filterLogs('EXPIRATION')" id="filterExpiration">Expiration</button>
+                <button class="btn-filter" onclick="filterLogs('ASSIGNMENT')" id="filterAssignment">Assignment</button>
+                <button class="btn-filter" onclick="filterLogs('ACTIVE')" id="filterActive">Active</button>
+            </div>
+            <input type="text" class="search-box" id="searchBox" placeholder="Search by symbol or date..." onkeyup="searchLogs()">
+        </div>
+
+        <!-- Interactive Trade List -->
+        <div class="trade-list" id="tradeList">
+            <!-- Trade cycles will be rendered dynamically by JavaScript -->
+        </div>
+    </div>
+
+    <!-- JavaScript Data and Logic -->
+    <script>
+        // Real backtest output data for DTE=45 / Delta=0.70
+        const tradeCycles = [
+        {
+                "id": 1,
+                "startDate": "2024-06-17",
+                "endDate": "2024-08-05",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": -6155.998535156243,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2024-06-17",
+                                "symbol": "TSLA240802C00170000",
+                                "stockPx": 187.44000244140625,
+                                "optPx": 24.150000000000002,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA240802C00170000 at $24.15. Stock bought at $187.44."
+                        },
+                        {
+                                "type": "ROLL",
+                                "date": "2024-07-29",
+                                "symbol": "TSLA240802C00170000",
+                                "stockPx": 232.10000610351562,
+                                "optPx": 63.055,
+                                "pnl": -23396.999999999996,
+                                "desc": "Extrinsic exhaustion (Delta-Driven): Closed contract TSLA240802C00170000 at $63.05."
+                        },
+                        {
+                                "type": "ROLL_ENTRY",
+                                "date": "2024-07-29",
+                                "symbol": "TSLA240913C00190000",
+                                "stockPx": 232.10000610351562,
+                                "optPx": 40.45,
+                                "pnl": 0.0,
+                                "desc": "Wrote new contract TSLA240913C00190000 at $40.45 on existing stock shares."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2024-08-05",
+                                "symbol": "TSLA240913C00190000",
+                                "stockPx": 198.8800048828125,
+                                "optPx": 22.95,
+                                "pnl": 17241.001464843754,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $198.88 and option at $22.95."
+                        }
+                ],
+                "attribution": {
+                        "delta": 1217.4707043457008,
+                        "theta": 604.962776875117,
+                        "gamma": -4344.000894927978,
+                        "vega": 23821.568878550905,
+                        "slippage": -62.999999999998124,
+                        "gap": -0.0,
+                        "interest": 45.02556099230031
+                }
+        },
+        {
+                "id": 2,
+                "startDate": "2024-08-13",
+                "endDate": "2024-10-11",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": 14100.000610351562,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2024-08-13",
+                                "symbol": "TSLA240927C00212500",
+                                "stockPx": 207.8300018310547,
+                                "optPx": 27.25,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA240927C00212500 at $27.25. Stock bought at $207.83."
+                        },
+                        {
+                                "type": "ROLL",
+                                "date": "2024-09-12",
+                                "symbol": "TSLA240927C00212500",
+                                "stockPx": 229.80999755859375,
+                                "optPx": 21.17,
+                                "pnl": 3039.999999999999,
+                                "desc": "Extrinsic exhaustion (Delta-Driven): Closed contract TSLA240927C00212500 at $21.17."
+                        },
+                        {
+                                "type": "ROLL_ENTRY",
+                                "date": "2024-09-16",
+                                "symbol": "TSLA241101C00200000",
+                                "stockPx": 226.77999877929688,
+                                "optPx": 36.050000000000004,
+                                "pnl": 0.0,
+                                "desc": "Wrote new contract TSLA241101C00200000 at $36.05 on existing stock shares."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2024-10-11",
+                                "symbol": "TSLA241101C00200000",
+                                "stockPx": 217.8000030517578,
+                                "optPx": 23.900000000000002,
+                                "pnl": 11060.000610351564,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $217.80 and option at $23.90."
+                        }
+                ],
+                "attribution": {
+                        "delta": 4908.633886718752,
+                        "theta": 33139.82308146819,
+                        "gamma": -7261.718045806885,
+                        "vega": 5848.261687971516,
+                        "slippage": -9.999999999999787,
+                        "gap": -0.0,
+                        "interest": 60.547180034001066
+                }
+        },
+        {
+                "id": 3,
+                "startDate": "2024-10-15",
+                "endDate": "2024-10-23",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": -815.006713867188,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2024-10-15",
+                                "symbol": "TSLA241129C00180000",
+                                "stockPx": 219.57000732421875,
+                                "optPx": 43.25,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA241129C00180000 at $43.25. Stock bought at $219.57."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2024-10-23",
+                                "symbol": "TSLA241129C00180000",
+                                "stockPx": 213.64999389648438,
+                                "optPx": 38.85,
+                                "pnl": -815.006713867188,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $213.65 and option at $38.85."
+                        }
+                ],
+                "attribution": {
+                        "delta": -281.5633361816404,
+                        "theta": 16735.189130741346,
+                        "gamma": -981.0830799102786,
+                        "vega": 3137.4505714833863,
+                        "slippage": -0.0,
+                        "gap": -0.0,
+                        "interest": 24.084248444877673
+                }
+        },
+        {
+                "id": 4,
+                "startDate": "2024-11-04",
+                "endDate": "2025-02-07",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": 14577.99951171875,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2024-11-04",
+                                "symbol": "TSLA241220C00225000",
+                                "stockPx": 242.83999633789062,
+                                "optPx": 28.8,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA241220C00225000 at $28.80. Stock bought at $242.84."
+                        },
+                        {
+                                "type": "ROLL",
+                                "date": "2024-11-29",
+                                "symbol": "TSLA241220C00225000",
+                                "stockPx": 345.1600036621094,
+                                "optPx": 121.75,
+                                "pnl": -37180.0,
+                                "desc": "Extrinsic exhaustion (Delta-Driven): Closed contract TSLA241220C00225000 at $121.75."
+                        },
+                        {
+                                "type": "ROLL_ENTRY",
+                                "date": "2024-12-02",
+                                "symbol": "TSLA250117C00330000",
+                                "stockPx": 357.0899963378906,
+                                "optPx": 43.6,
+                                "pnl": 0.0,
+                                "desc": "Wrote new contract TSLA250117C00330000 at $43.60 on existing stock shares."
+                        },
+                        {
+                                "type": "ROLL",
+                                "date": "2025-01-06",
+                                "symbol": "TSLA250117C00330000",
+                                "stockPx": 411.04998779296875,
+                                "optPx": 83.03,
+                                "pnl": -15772.0,
+                                "desc": "Extrinsic exhaustion (Delta-Driven): Closed contract TSLA250117C00330000 at $83.03."
+                        },
+                        {
+                                "type": "ROLL_ENTRY",
+                                "date": "2025-01-06",
+                                "symbol": "TSLA250221C00375000",
+                                "stockPx": 411.04998779296875,
+                                "optPx": 58.550000000000004,
+                                "pnl": 0.0,
+                                "desc": "Wrote new contract TSLA250221C00375000 at $58.55 on existing stock shares."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2025-02-07",
+                                "symbol": "TSLA250221C00375000",
+                                "stockPx": 361.6199951171875,
+                                "optPx": 8.450000000000001,
+                                "pnl": 67529.99951171875,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $361.62 and option at $8.45."
+                        }
+                ],
+                "attribution": {
+                        "delta": 14159.221799316401,
+                        "theta": 61600.10730927078,
+                        "gamma": -6514.009338378906,
+                        "vega": 7226.6797415104775,
+                        "slippage": -31.999999999999318,
+                        "gap": -0.0,
+                        "interest": -106.74892272207215
+                }
+        },
+        {
+                "id": 5,
+                "startDate": "2025-05-05",
+                "endDate": "2025-06-05",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": -8201.999023437502,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2025-05-05",
+                                "symbol": "TSLA250620C00240000",
+                                "stockPx": 280.260009765625,
+                                "optPx": 50.400000000000006,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA250620C00240000 at $50.40. Stock bought at $280.26."
+                        },
+                        {
+                                "type": "ROLL",
+                                "date": "2025-05-30",
+                                "symbol": "TSLA250620C00240000",
+                                "stockPx": 346.4599914550781,
+                                "optPx": 107.35000000000001,
+                                "pnl": -22798.0,
+                                "desc": "Extrinsic exhaustion (Delta-Driven): Closed contract TSLA250620C00240000 at $107.35."
+                        },
+                        {
+                                "type": "ROLL_ENTRY",
+                                "date": "2025-06-02",
+                                "symbol": "TSLA250718C00305000",
+                                "stockPx": 342.69000244140625,
+                                "optPx": 52.0,
+                                "pnl": 0.0,
+                                "desc": "Wrote new contract TSLA250718C00305000 at $52.00 on existing stock shares."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2025-06-05",
+                                "symbol": "TSLA250718C00305000",
+                                "stockPx": 284.70001220703125,
+                                "optPx": 19.95,
+                                "pnl": 14596.000976562498,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $284.70 and option at $19.95."
+                        }
+                ],
+                "attribution": {
+                        "delta": -4747.951531982424,
+                        "theta": 49867.68981092882,
+                        "gamma": -9830.745770263671,
+                        "vega": 7429.008467879776,
+                        "slippage": -0.0,
+                        "gap": -0.0,
+                        "interest": 44.7956800089741
+                }
+        },
+        {
+                "id": 6,
+                "startDate": "2025-06-09",
+                "endDate": "2025-07-07",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": 724.5047607421875,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2025-06-09",
+                                "symbol": "TSLA250725C00255000",
+                                "stockPx": 308.5799865722656,
+                                "optPx": 61.5,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA250725C00255000 at $61.50. Stock bought at $308.58."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2025-07-07",
+                                "symbol": "TSLA250725C00255000",
+                                "stockPx": 293.94000244140625,
+                                "optPx": 44.2,
+                                "pnl": 724.5047607421875,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $293.94 and option at $44.20."
+                        }
+                ],
+                "attribution": {
+                        "delta": 625.772611999511,
+                        "theta": 15819.340827044307,
+                        "gamma": -3663.684730682373,
+                        "vega": 1203.0760523807437,
+                        "slippage": -0.0,
+                        "gap": -0.0,
+                        "interest": 92.63695207973544
+                }
+        },
+        {
+                "id": 7,
+                "startDate": "2025-07-14",
+                "endDate": "2025-08-08",
+                "status": "CLOSED",
+                "exitReason": "VRP",
+                "pnl": 3568.9889999999987,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2025-07-14",
+                                "symbol": "TSLA250829C00270000",
+                                "stockPx": 316.8999938964844,
+                                "optPx": 54.5,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA250829C00270000 at $54.50. Stock bought at $316.90."
+                        },
+                        {
+                                "type": "ROLL",
+                                "date": "2025-08-08",
+                                "symbol": "TSLA250829C00270000",
+                                "stockPx": 329.6499938964844,
+                                "optPx": 55.353370000000005,
+                                "pnl": -256.01100000000156,
+                                "desc": "Extrinsic exhaustion (Vega-Driven): Closed contract TSLA250829C00270000 at $55.35."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2025-08-08",
+                                "symbol": "None",
+                                "stockPx": 329.6499938964844,
+                                "optPx": 0.0,
+                                "pnl": 3825.0,
+                                "desc": "VRP Underpricing Halt: Liquidated stock shares at $329.65 to return to 100% Cash."
+                        }
+                ],
+                "attribution": {
+                        "delta": 1042.5549591064455,
+                        "theta": 17413.14449149749,
+                        "gamma": 157.8322334289552,
+                        "vega": 1561.4683159671117,
+                        "slippage": -121.01100000000073,
+                        "gap": -0.0,
+                        "interest": 75.67795755874695
+                }
+        },
+        {
+                "id": 8,
+                "startDate": "2025-10-07",
+                "endDate": "2025-11-20",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": -138.99707031250045,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2025-10-07",
+                                "symbol": "TSLA251121C00385000",
+                                "stockPx": 433.0899963378906,
+                                "optPx": 65.60000000000001,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA251121C00385000 at $65.60. Stock bought at $433.09."
+                        },
+                        {
+                                "type": "ROLL",
+                                "date": "2025-11-10",
+                                "symbol": "TSLA251121C00385000",
+                                "stockPx": 445.2300109863281,
+                                "optPx": 62.690000000000005,
+                                "pnl": 548.9999999999995,
+                                "desc": "Extrinsic exhaustion (Vega-Driven): Closed contract TSLA251121C00385000 at $62.69."
+                        },
+                        {
+                                "type": "ROLL_ENTRY",
+                                "date": "2025-11-10",
+                                "symbol": "TSLA251226C00400000",
+                                "stockPx": 445.2300109863281,
+                                "optPx": 61.050000000000004,
+                                "pnl": 0.0,
+                                "desc": "Wrote new contract TSLA251226C00400000 at $61.05 on existing stock shares."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2025-11-20",
+                                "symbol": "TSLA251226C00400000",
+                                "stockPx": 395.2300109863281,
+                                "optPx": 26.6,
+                                "pnl": -687.9970703125,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $395.23 and option at $26.60."
+                        }
+                ],
+                "attribution": {
+                        "delta": -1068.1119610595701,
+                        "theta": 3821.3236930529556,
+                        "gamma": -2477.1824981689456,
+                        "vega": 5238.97369586306,
+                        "slippage": -7.9999999999998295,
+                        "gap": -0.0,
+                        "interest": 121.11725230589303
+                }
+        },
+        {
+                "id": 9,
+                "startDate": "2025-12-01",
+                "endDate": "2026-01-05",
+                "status": "CLOSED",
+                "exitReason": "VRP",
+                "pnl": 2565.999755859376,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2025-12-01",
+                                "symbol": "TSLA260116C00390000",
+                                "stockPx": 430.1400146484375,
+                                "optPx": 54.550000000000004,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA260116C00390000 at $54.55. Stock bought at $430.14."
+                        },
+                        {
+                                "type": "ROLL",
+                                "date": "2026-01-05",
+                                "symbol": "TSLA260116C00390000",
+                                "stockPx": 451.6700134277344,
+                                "optPx": 63.25,
+                                "pnl": -1739.999999999999,
+                                "desc": "Extrinsic exhaustion (Delta-Driven): Closed contract TSLA260116C00390000 at $63.25."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2026-01-05",
+                                "symbol": "None",
+                                "stockPx": 451.6700134277344,
+                                "optPx": 0.0,
+                                "pnl": 4305.999755859375,
+                                "desc": "VRP Underpricing Halt: Liquidated stock shares at $451.67 to return to 100% Cash."
+                        }
+                ],
+                "attribution": {
+                        "delta": 1786.5535626220703,
+                        "theta": 11627.159863688623,
+                        "gamma": 702.9687771606447,
+                        "vega": 1099.3175523880363,
+                        "slippage": -0.0,
+                        "gap": -0.0,
+                        "interest": 107.29100609478522
+                }
+        },
+        {
+                "id": 10,
+                "startDate": "2026-01-15",
+                "endDate": "2026-01-20",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": -12174.00146484375,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2026-01-15",
+                                "symbol": "TSLA260302C00355000",
+                                "stockPx": 438.57000732421875,
+                                "optPx": 38.0,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA260302C00355000 at $38.00. Stock bought at $438.57."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2026-01-20",
+                                "symbol": "TSLA260302C00355000",
+                                "stockPx": 419.25,
+                                "optPx": 79.55,
+                                "pnl": -12174.00146484375,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $419.25 and option at $79.55."
+                        }
+                ],
+                "attribution": {
+                        "delta": -32.46521972656247,
+                        "theta": -73.9184176375511,
+                        "gamma": -1808.7780902099607,
+                        "vega": 5651.160262730325,
+                        "slippage": -0.0,
+                        "gap": -0.0,
+                        "interest": 19.503150155322494
+                }
+        },
+        {
+                "id": 11,
+                "startDate": "2026-01-22",
+                "endDate": "2026-01-29",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": 2690.00244140625,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2026-01-22",
+                                "symbol": "TSLA260309C00362500",
+                                "stockPx": 449.3599853515625,
+                                "optPx": 46.25,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA260309C00362500 at $46.25. Stock bought at $449.36."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2026-01-29",
+                                "symbol": "TSLA260309C00362500",
+                                "stockPx": 416.55999755859375,
+                                "optPx": 0.0,
+                                "pnl": 2690.00244140625,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $416.56 and option at $0.00."
+                        }
+                ],
+                "attribution": {
+                        "delta": -983.9996337890627,
+                        "theta": 2061.867891827811,
+                        "gamma": -1266.4994812011719,
+                        "vega": 2878.633664568673,
+                        "slippage": -0.0,
+                        "gap": -0.0,
+                        "interest": 13.66844667844099
+                }
+        },
+        {
+                "id": 12,
+                "startDate": "2026-02-24",
+                "endDate": "2026-02-27",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": -3513.999023437499,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2026-02-24",
+                                "symbol": "TSLA260410C00330000",
+                                "stockPx": 409.3800048828125,
+                                "optPx": 47.650000000000006,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA260410C00330000 at $47.65. Stock bought at $409.38."
+                        },
+                        {
+                                "type": "ROLL",
+                                "date": "2026-02-25",
+                                "symbol": "TSLA260410C00330000",
+                                "stockPx": 417.3999938964844,
+                                "optPx": 58.35,
+                                "pnl": -2139.999999999999,
+                                "desc": "Extrinsic exhaustion (Vega-Driven): Closed contract TSLA260410C00330000 at $58.35."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2026-02-27",
+                                "symbol": "None",
+                                "stockPx": 402.510009765625,
+                                "optPx": 0.0,
+                                "pnl": -1373.9990234375,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $402.51 and option at $0.00."
+                        }
+                ],
+                "attribution": {
+                        "delta": -2737.3971557617188,
+                        "theta": 7910.362126759503,
+                        "gamma": 681.6990661621094,
+                        "vega": 2301.336939402608,
+                        "slippage": -0.0,
+                        "gap": -0.0,
+                        "interest": 12.097139662270594
+                }
+        },
+        {
+                "id": 13,
+                "startDate": "2026-03-17",
+                "endDate": "2026-03-18",
+                "status": "CLOSED",
+                "exitReason": "TREND",
+                "pnl": -887.9980468750006,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2026-03-17",
+                                "symbol": "TSLA260501C00320000",
+                                "stockPx": 399.2699890136719,
+                                "optPx": 82.25,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA260501C00320000 at $82.25. Stock bought at $399.27."
+                        },
+                        {
+                                "type": "EXIT",
+                                "date": "2026-03-18",
+                                "symbol": "TSLA260501C00320000",
+                                "stockPx": 392.7799987792969,
+                                "optPx": 80.2,
+                                "pnl": -887.9980468750006,
+                                "desc": "Trend Exit triggered: Stock closed below 50-day EMA. Liquidated stock at $392.78 and option at $80.20."
+                        }
+                ],
+                "attribution": {
+                        "delta": -194.69970703125003,
+                        "theta": 13752.45072360518,
+                        "gamma": -551.649169921875,
+                        "vega": 2145.9001064729455,
+                        "slippage": -0.0,
+                        "gap": -0.0,
+                        "interest": 11.021790372190035
+                }
+        },
+        {
+                "id": 14,
+                "startDate": "2026-05-04",
+                "endDate": "\u2014",
+                "status": "ACTIVE",
+                "exitReason": "ACTIVE",
+                "pnl": 0.0,
+                "events": [
+                        {
+                                "type": "ENTRY",
+                                "date": "2026-05-04",
+                                "symbol": "TSLA260618C00345000",
+                                "stockPx": 392.510009765625,
+                                "optPx": 54.900000000000006,
+                                "pnl": 0.0,
+                                "desc": "Opened position: Wrote contract TSLA260618C00345000 at $54.90. Stock bought at $392.51."
+                        }
+                ],
+                "attribution": {
+                        "delta": 1327.3801062011712,
+                        "theta": 124.35072133482205,
+                        "gamma": -386.9998422241211,
+                        "vega": -188.73122945250034,
+                        "slippage": -0.0,
+                        "gap": -0.0,
+                        "interest": 73.47694893099742
+                }
+        }
+];
+
+        // Format Currency Helper
+        function formatCurrency(val) {
+            const absVal = Math.abs(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return val >= 0 ? `+$${absVal}` : `-$${absVal}`;
+        }
+
+        // Render Trade Cycles to DOM
+        function renderCycles(data) {
+            const listContainer = document.getElementById("tradeList");
+            listContainer.innerHTML = "";
+
+            if (data.length === 0) {
+                listContainer.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: var(--text-muted); border: 1px dashed var(--border-light); border-radius: 16px;">
+                        No trade cycles match the search or filter criteria.
+                    </div>
+                `;
+                return;
+            }
+
+            data.forEach((cycle) => {
+                const isWin = cycle.pnl >= 0;
+                const pnlClass = isWin ? "pnl-gain" : "pnl-loss";
+                let badgeClass = `badge-${cycle.exitReason.toLowerCase()}`;
+                if (cycle.exitReason === "ASSIGNMENT") badgeClass = "badge-hazard";
+                
+                let reasonLabel = cycle.exitReason;
+                if (cycle.exitReason === "TREND") reasonLabel = "Trend Exit";
+                else if (cycle.exitReason === "VRP") reasonLabel = "VRP Halt";
+                else if (cycle.exitReason === "ROLL") reasonLabel = "Early Roll";
+                else if (cycle.exitReason === "STOPLOSS") reasonLabel = "Stop Loss";
+                else if (cycle.exitReason === "EXPIRATION") reasonLabel = "Expiration";
+                else if (cycle.exitReason === "ASSIGNMENT") reasonLabel = "Assignment";
+                else if (cycle.exitReason === "ACTIVE") reasonLabel = "Active";
+
+                // Generate events timeline HTML
+                let timelineHtml = "";
+                cycle.events.forEach((ev) => {
+                    let dotClass = "dot-entry";
+                    if (ev.type === "ROLL" || ev.type === "ROLL_ENTRY") dotClass = "dot-roll";
+                    else if (ev.type === "EXIT") {
+                        if (cycle.exitReason === "TREND") dotClass = "dot-trend";
+                        else if (cycle.exitReason === "VRP") dotClass = "dot-vrp";
+                        else if (cycle.exitReason === "STOPLOSS") dotClass = "dot-exit";
+                        else dotClass = "dot-exit";
+                    }
+
+                    timelineHtml += `
+                        <div class="timeline-event">
+                            <div class="timeline-dot ${dotClass}"></div>
+                            <div class="timeline-content">
+                                <div class="event-type">
+                                    <span class="event-name">${ev.type}</span>
+                                    <span class="event-date">${ev.date}</span>
+                                </div>
+                                <div class="event-data">
+                                    <div class="data-item">Symbol: <strong>${ev.symbol}</strong></div>
+                                    <div class="data-item">Stock Px: <strong>$${ev.stockPx.toFixed(2)}</strong></div>
+                                    <div class="data-item">Option Premium: <strong>$${ev.optPx.toFixed(2)}</strong></div>
+                                </div>
+                                <div class="event-pnl ${ev.pnl >= 0 ? 'pnl-gain' : 'pnl-loss'}">
+                                    ${ev.pnl !== 0 ? formatCurrency(ev.pnl) : '—'}
+                                </div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary); width: 100%; margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.02); padding-top: 0.5rem;">
+                                    ${ev.desc}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const cardHtml = `
+                    <div class="cycle-card" id="cycleCard-${cycle.id}">
+                        <div class="cycle-header" onclick="toggleDetails(${cycle.id})">
+                            <div class="cycle-num">Cycle #${cycle.id}</div>
+                            <div class="cycle-dates">${cycle.startDate} to ${cycle.endDate}</div>
+                            <div class="cycle-info">
+                                <div class="cycle-info-item">Duration: <strong>${calculateDuration(cycle.startDate, cycle.endDate)} days</strong></div>
+                                <div class="cycle-info-item">Entry Option: <strong>${cycle.events[0].symbol}</strong></div>
+                            </div>
+                            <div class="cycle-status">
+                                <span class="badge ${badgeClass}">${reasonLabel}</span>
+                            </div>
+                            <div class="cycle-pnl ${pnlClass}">
+                                ${cycle.status === "ACTIVE" ? '—' : formatCurrency(cycle.pnl)}
+                            </div>
+                            <div class="cycle-toggle-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                        </div>
+                        <div class="cycle-details">
+                            <div class="timeline">
+                                ${timelineHtml}
+                            </div>
+                            ${cycle.status !== "ACTIVE" ? `
+                            <div class="attribution-box">
+                                <div class="attribution-title">P&L Return Attribution breakdown</div>
+                                <div class="attribution-grid">
+                                    <div class="attrib-item">Delta Drift (Dir)<strong>${formatCurrency(cycle.attribution.delta)}</strong></div>
+                                    <div class="attrib-item">Theta Decay (Time)<strong>${formatCurrency(cycle.attribution.theta)}</strong></div>
+                                    <div class="attrib-item">Gamma Drag (Convex)<strong>${formatCurrency(cycle.attribution.gamma)}</strong></div>
+                                    <div class="attrib-item">Vega Volatility<strong>${formatCurrency(cycle.attribution.vega)}</strong></div>
+                                    <div class="attrib-item">Slippage Cost<strong>${formatCurrency(cycle.attribution.slippage)}</strong></div>
+                                    <div class="attrib-item">Gap Loss (Overnight)<strong>${formatCurrency(cycle.attribution.gap)}</strong></div>
+                                    <div class="attrib-item">Treasury Interest<strong>${formatCurrency(cycle.attribution.interest)}</strong></div>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                listContainer.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        // Toggle Cycle Card expansion
+        function toggleDetails(id) {
+            const card = document.getElementById(`cycleCard-${id}`);
+            card.classList.toggle("expanded");
+        }
+
+        // Calculate Calendar Days helper
+        function calculateDuration(start, end) {
+            if (end === "—") {
+                const diffTime = Math.abs(new Date() - new Date(start));
+                return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+            const diffTime = Math.abs(new Date(end) - new Date(start));
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // Filter Functionality
+        let currentFilter = "ALL";
+        function filterLogs(filterType) {
+            currentFilter = filterType;
+            
+            // Toggle active filter button styling
+            const buttons = document.querySelectorAll(".btn-filter");
+            buttons.forEach(btn => btn.classList.remove("active"));
+            
+            if (filterType === "ALL") document.getElementById("filterAll").classList.add("active");
+            else if (filterType === "TREND") document.getElementById("filterTrend").classList.add("active");
+            else if (filterType === "VRP") document.getElementById("filterVrp").classList.add("active");
+            else if (filterType === "ROLL") document.getElementById("filterRoll").classList.add("active");
+            else if (filterType === "STOPLOSS") document.getElementById("filterStoploss").classList.add("active");
+            else if (filterType === "EXPIRATION") document.getElementById("filterExpiration").classList.add("active");
+            else if (filterType === "ASSIGNMENT") document.getElementById("filterAssignment").classList.add("active");
+            else if (filterType === "ACTIVE") document.getElementById("filterActive").classList.add("active");
+
+            applyFilterAndSearch();
+        }
+
+        // Search Functionality
+        function searchLogs() {
+            applyFilterAndSearch();
+        }
+
+        // Joint Filter and Search logic
+        function applyFilterAndSearch() {
+            const searchQuery = document.getElementById("searchBox").value.toLowerCase();
+            
+            const filteredData = tradeCycles.filter(cycle => {
+                // Check filter type
+                let matchesFilter = false;
+                if (currentFilter === "ALL") {
+                    matchesFilter = true;
+                } else if (currentFilter === "ROLL") {
+                    // Match if the cycle contains any roll event
+                    matchesFilter = cycle.events.some(ev => ev.type.includes("ROLL"));
+                } else {
+                    matchesFilter = cycle.exitReason === currentFilter;
+                }
+                
+                // Check search query matches symbol, date, or events description
+                const matchesSearch = 
+                    cycle.startDate.includes(searchQuery) ||
+                    cycle.endDate.includes(searchQuery) ||
+                    cycle.events.some(ev => 
+                        ev.symbol.toLowerCase().includes(searchQuery) || 
+                        ev.desc.toLowerCase().includes(searchQuery)
+                    );
+                
+                return matchesFilter && matchesSearch;
+            });
+
+            renderCycles(filteredData);
+        }
+
+        // Initial Page Render
+        window.onload = function() {
+            renderCycles(tradeCycles);
+        };
+    </script>
+</body>
+</html>
