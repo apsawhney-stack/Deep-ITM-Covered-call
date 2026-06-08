@@ -38,14 +38,68 @@ def main():
     # Convert date column to python date objects
     stock_df['Date'] = pd.to_datetime(stock_df['Date']).dt.date
     
-    # Run backtest
-    print("Running Backtest Simulation...")
+    # Run baseline backtest first to identify blocked entry dates
+    print("Running Baseline Backtest Simulation for comparisons...")
+    baseline_config = dict(config)
+    baseline_config['ema_confirm_days'] = 0
+    baseline_config['cooling_days'] = 0
+    baseline_engine = BacktestEngine(baseline_config, loader)
+    baseline_engine.run_backtest()
+    
+    # Run active/improved backtest
+    print("Running Active Backtest Simulation...")
     engine = BacktestEngine(config, loader)
     daily_history_pl = engine.run_backtest()
     daily_df = daily_history_pl.to_pandas()
     daily_df['date'] = pd.to_datetime(daily_df['date']).dt.date
     
     print(f"Backtest finished. Logged {len(engine.trade_log)} events.")
+    
+    # Identify blocked and shifted/new entry dates
+    base_entries = [e for e in baseline_engine.trade_log if e['event'] == 'ENTRY']
+    improved_entries = [e for e in engine.trade_log if e['event'] == 'ENTRY']
+    
+    base_dates_info = {}
+    for e in base_entries:
+        dt = e['date']
+        if not isinstance(dt, date):
+            dt = pd.to_datetime(dt).date()
+        dt_str = dt.strftime("%Y-%m-%d")
+        base_dates_info[dt_str] = e
+        
+    improved_dates_info = {}
+    for e in improved_entries:
+        dt = e['date']
+        if not isinstance(dt, date):
+            dt = pd.to_datetime(dt).date()
+        dt_str = dt.strftime("%Y-%m-%d")
+        improved_dates_info[dt_str] = e
+        
+    base_dates = set(base_dates_info.keys())
+    improved_dates = set(improved_dates_info.keys())
+    
+    blocked_dates = sorted(list(base_dates - improved_dates))
+    new_dates = sorted(list(improved_dates - base_dates))
+    
+    blocked_list = []
+    for d in blocked_dates:
+        ev = base_dates_info[d]
+        blocked_list.append({
+            'date': d,
+            'stock_price': float(ev['stock_price']),
+            'option_price': float(ev['option_price']),
+            'symbol': ev['symbol']
+        })
+        
+    new_list = []
+    for d in new_dates:
+        ev = improved_dates_info[d]
+        new_list.append({
+            'date': d,
+            'stock_price': float(ev['stock_price']),
+            'option_price': float(ev['option_price']),
+            'symbol': ev['symbol']
+        })
     
     # Calculate metrics
     print("Calculating overall performance metrics...")
@@ -765,6 +819,125 @@ def main():
                 gap: 1rem;
             }
         }
+
+        /* Diagnostics Section Styles */
+        .diagnostics-section {
+            background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(20, 26, 41, 0.4) 100%);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .diagnostics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 1100px) {
+            .diagnostics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .diagnostic-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .diagnostic-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.75rem;
+        }
+        
+        .diagnostic-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .diagnostic-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+        
+        .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .indicator-blocked {
+            background-color: var(--accent-red);
+            box-shadow: 0 0 8px var(--accent-red);
+        }
+        
+        .indicator-shifted {
+            background-color: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+        
+        .diagnostic-table-container {
+            max-height: 250px;
+            overflow-y: auto;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        
+        .diagnostic-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+        
+        .diagnostic-table th {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .diagnostic-table td {
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            color: var(--text-secondary);
+        }
+        
+        .diagnostic-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .diagnostic-table tr:hover td {
+            background-color: rgba(255, 255, 255, 0.01);
+            color: var(--text-primary);
+        }
+        
+        .text-blocked {
+            color: var(--accent-red);
+            font-weight: 500;
+        }
+        
+        .text-shifted {
+            color: var(--accent-green);
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -802,6 +975,67 @@ def main():
                 <div class="card-label">Active Trade Status</div>
                 <div class="card-value" id="activeCyclesVal" style="color: var(--accent-orange);">_ACTIVE_STATUS_</div>
                 <div class="card-subtext">_ACTIVE_DESC_</div>
+            </div>
+        </div>
+
+        <!-- Anti-Whipsaw Gate Diagnostics -->
+        <div class="diagnostics-section" id="diagnosticsSection">
+            <h2 class="legend-title" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-blue);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Anti-Whipsaw Entry Gate Diagnostics
+            </h2>
+            <div class="diagnostics-grid">
+                <div class="diagnostic-card">
+                    <div class="diagnostic-header">
+                        <div class="diagnostic-title">
+                            <span class="indicator indicator-blocked"></span>
+                            Blocked Whipsaw Entry Attempts (_BLOCKED_COUNT_ Avoided)
+                        </div>
+                        <p class="diagnostic-subtitle">Potentially toxic entries prevented because stock was below the 50-day EMA or failed to maintain a 3-day consecutive confirmation above it.</p>
+                    </div>
+                    <div class="diagnostic-table-container">
+                        <table class="diagnostic-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Asset</th>
+                                    <th>Stock Price</th>
+                                    <th>Option Attempt</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blockedEntriesBody">
+                                <!-- Blocked entries will be rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="diagnostic-card">
+                    <div class="diagnostic-header">
+                        <div class="diagnostic-title">
+                            <span class="indicator indicator-shifted"></span>
+                            New / Shifted Entry Points (_SHIFTED_COUNT_ Confirmed)
+                        </div>
+                        <p class="diagnostic-subtitle">Valid entry signals established after the anti-whipsaw gate verified stock recovery above the 50-day EMA.</p>
+                    </div>
+                    <div class="diagnostic-table-container">
+                        <table class="diagnostic-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Asset</th>
+                                    <th>Stock Price</th>
+                                    <th>Option Written</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shiftedEntriesBody">
+                                <!-- Shifted entries will be rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1053,9 +1287,53 @@ def main():
             renderCycles(filteredData);
         }
 
+        const blockedEntries = _BLOCKED_ENTRIES_JSON_;
+        const shiftedEntries = _SHIFTED_ENTRIES_JSON_;
+
+        function renderDiagnostics() {
+            const blockedBody = document.getElementById("blockedEntriesBody");
+            const shiftedBody = document.getElementById("shiftedEntriesBody");
+            
+            blockedBody.innerHTML = "";
+            shiftedBody.innerHTML = "";
+            
+            if (blockedEntries.length === 0) {
+                blockedBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No entry attempts were blocked.</td></tr>`;
+            } else {
+                blockedEntries.forEach(ev => {
+                    blockedBody.insertAdjacentHTML('beforeend', `
+                        <tr>
+                            <td><strong>${ev.date}</strong></td>
+                            <td>TSLA</td>
+                            <td>$${ev.stock_price.toFixed(2)}</td>
+                            <td><code style="color: var(--text-muted); font-size: 0.8rem;">${ev.symbol}</code></td>
+                            <td><span class="text-blocked">Blocked (Avoided Whipsaw)</span></td>
+                        </tr>
+                    `);
+                });
+            }
+            
+            if (shiftedEntries.length === 0) {
+                shiftedBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No shifted entry points.</td></tr>`;
+            } else {
+                shiftedEntries.forEach(ev => {
+                    shiftedBody.insertAdjacentHTML('beforeend', `
+                        <tr>
+                            <td><strong>${ev.date}</strong></td>
+                            <td>TSLA</td>
+                            <td>$${ev.stock_price.toFixed(2)}</td>
+                            <td><code style="color: var(--accent-blue); font-size: 0.8rem;">${ev.symbol}</code></td>
+                            <td><span class="text-shifted">Active / Confirmed Entry</span></td>
+                        </tr>
+                    `);
+                });
+            }
+        }
+
         // Initial Page Render
         window.onload = function() {
             renderCycles(tradeCycles);
+            renderDiagnostics();
         };
     </script>
 </body>
@@ -1086,6 +1364,12 @@ def main():
     
     # Inject JSON representation of trade cycles
     html_output = html_output.replace("_TRADE_CYCLES_JSON_", json.dumps(trade_cycles, indent=8))
+    
+    # Inject diagnostics placeholders
+    html_output = html_output.replace("_BLOCKED_COUNT_", str(len(blocked_list)))
+    html_output = html_output.replace("_SHIFTED_COUNT_", str(len(new_list)))
+    html_output = html_output.replace("_BLOCKED_ENTRIES_JSON_", json.dumps(blocked_list, indent=8))
+    html_output = html_output.replace("_SHIFTED_ENTRIES_JSON_", json.dumps(new_list, indent=8))
     
     # Write to trade_log.html in root
     output_path = "trade_log.html"

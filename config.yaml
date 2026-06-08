@@ -20,6 +20,13 @@ min_open_interest: 100          # Minimum option contract open interest
 min_daily_volume: 10            # Minimum option contract trading volume
 max_spread_to_mid: 0.15         # Maximum bid-ask spread relative to midpoint (15%)
 
+# Improvement 1: Anti-Whipsaw Entry Gate
+# Backtest result: EMA confirmation alone (ema_confirm_days=3) doubles CAGR (5.17%→9.65%)
+# and raises Sharpe from 0.128→0.337. Cooling period adds no incremental value on top.
+ema_confirm_days: 3             # Require 3 consecutive closes above EMA-50 before entry
+cooling_days: 0                 # Not needed — EMA gate handles whipsaw prevention
+
+
 # Date Range for Backtest
 start_date: "2024-06-01"
 end_date: "2026-05-31"

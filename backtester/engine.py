@@ -32,10 +32,20 @@ class BacktestEngine:
         self.min_daily_volume = config.get('min_daily_volume', 10)
         self.max_spread_to_mid = config.get('max_spread_to_mid', 0.15)
         
+        # --- IMPROVEMENT 1: Anti-Whipsaw Entry Gate ---
+        # cooling_days: minimum calendar days to wait after any exit before re-entering.
+        # ema_confirm_days: number of consecutive closes above EMA-50 required before re-entry.
+        # Set both to 0 (default) to preserve original baseline behaviour.
+        self.cooling_days = config.get('cooling_days', 0)
+        self.ema_confirm_days = config.get('ema_confirm_days', 0)
+        self.last_exit_date = None          # Date of most recent exit event
+        self.consecutive_above_ema = 0     # Rolling counter of days closed above EMA-50
+        
         # Stats counters
         self.early_assignments_count = 0
         self.liquidity_rejections_count = 0
         self.total_attempts_count = 0
+        self.whipsaw_blocks_count = 0      # Days blocked by the anti-whipsaw gate
 
     def get_regime_and_delta(self, pct_diff: float, vrp_z: float):
         """
@@ -273,6 +283,14 @@ class BacktestEngine:
             vix = float(row['VIX'])
             treasury_rate = float(row['Treasury_Yield_3M'])
             vrp_z = float(row['VRP_z'])
+            
+            # --- IMPROVEMENT 1: Track EMA confirmation counter daily ---
+            # Update regardless of position state so the counter is pre-warmed
+            # by the time we exit and look for the next entry.
+            if stock_close > ema_50:
+                self.consecutive_above_ema += 1
+            else:
+                self.consecutive_above_ema = 0
             
             # --- STEP A: ACCRUE INTEREST ON CASH ---
             # If in cash, sweep interest daily
@@ -523,6 +541,9 @@ class BacktestEngine:
                         'pnl_slippage': 0.0,
                         'pnl_gap': 0.0
                     })
+                    # --- IMPROVEMENT 1: Record exit date and reset EMA counter ---
+                    self.last_exit_date = current_date
+                    self.consecutive_above_ema = 0
                     prev_date = current_date
                     self._log_history(current_date, stock_close, stock_open, stock_high, stock_low, ema_50, vix, vrp_z, treasury_rate)
                     continue
@@ -530,6 +551,23 @@ class BacktestEngine:
             # --- STEP G: NEW ENTRY TRIGGER ---
             if self.tracker.shares == 0:
                 pct_diff = (stock_close - ema_50) / ema_50
+                
+                # --- IMPROVEMENT 1: Anti-Whipsaw Gate ---
+                # Gate 1 — Cooling period: must wait minimum calendar days since last exit.
+                if self.cooling_days > 0 and self.last_exit_date is not None:
+                    days_since_exit = (current_date - self.last_exit_date).days
+                    if days_since_exit < self.cooling_days:
+                        self.whipsaw_blocks_count += 1
+                        prev_date = current_date
+                        self._log_history(current_date, stock_close, stock_open, stock_high, stock_low, ema_50, vix, vrp_z, treasury_rate)
+                        continue
+                
+                # Gate 2 — EMA confirmation: require N consecutive closes above EMA-50.
+                if self.ema_confirm_days > 0 and self.consecutive_above_ema < self.ema_confirm_days:
+                    self.whipsaw_blocks_count += 1
+                    prev_date = current_date
+                    self._log_history(current_date, stock_close, stock_open, stock_high, stock_low, ema_50, vix, vrp_z, treasury_rate)
+                    continue
                 
                 # Check VRP z-score and EMA trend matrix
                 regime, target_delta, posture = self.get_regime_and_delta(pct_diff, vrp_z)
